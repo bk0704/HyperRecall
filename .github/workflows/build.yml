@@ -41,13 +41,19 @@ jobs:
         run: .\vcpkg\bootstrap-vcpkg.bat
         shell: powershell
 
-      - name: Add vcpkg to PATH
+      - name: Add vcpkg to PATH (Windows)
+        if: runner.os == 'Windows'
+        run: Add-Content -Path $env:GITHUB_PATH -Value "${{ github.workspace }}\vcpkg"
+        shell: powershell
+
+      - name: Add vcpkg to PATH (Unix)
+        if: runner.os != 'Windows'
         run: echo "${{ github.workspace }}/vcpkg" >> $GITHUB_PATH
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
-          vcpkg install raylib sqlite3
+          vcpkg install raylib sqlite3 --triplet x64-windows
           echo "TODO: Acquire raygui.h and set HYPERRECALL_RAYGUI_HEADER or enable HYPERRECALL_USE_SYSTEM_RAYGUI."
 
       - name: Configure
