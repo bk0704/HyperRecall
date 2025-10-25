@@ -29,31 +29,43 @@ jobs:
           sudo apt-get install -y cmake ninja-build pkg-config libraylib-dev libsqlite3-dev
           echo "TODO: Provide raygui.h via external/raygui/ or a system package."
 
-      - name: Setup vcpkg (Windows)
+      - name: Clone vcpkg
+        run: git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+
+      - name: Bootstrap vcpkg (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: ./vcpkg/bootstrap-vcpkg.sh
+
+      - name: Bootstrap vcpkg (Windows)
         if: runner.os == 'Windows'
-        uses: lukka/setup-vcpkg@v1
-        with:
-          vcpkgTriplet: x64-windows
+        run: .\vcpkg\bootstrap-vcpkg.bat
+        shell: powershell
+
+      - name: Add vcpkg to PATH (Windows)
+        if: runner.os == 'Windows'
+        run: Add-Content -Path $env:GITHUB_PATH -Value "${{ github.workspace }}\vcpkg"
+        shell: powershell
+
+      - name: Add vcpkg to PATH (Unix)
+        if: runner.os != 'Windows'
+        run: echo "${{ github.workspace }}/vcpkg" >> $GITHUB_PATH
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
-          vcpkg install raylib sqlite3
+          vcpkg install raylib sqlite3 --triplet x64-windows
           echo "TODO: Acquire raygui.h and set HYPERRECALL_RAYGUI_HEADER or enable HYPERRECALL_USE_SYSTEM_RAYGUI."
 
       - name: Configure
         run: |
-          cmake_args=(
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          )
-
-          if [[ '${{ runner.os }}' == 'Windows' ]]; then
-            cmake_args+=(
-              "-DCMAKE_TOOLCHAIN_FILE=$(cygpath -u '${{ env.VCPKG_ROOT }}')/scripts/buildsystems/vcpkg.cmake"
-            )
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cmake -S . -B "build/${{ matrix.build_type }}" -G Ninja \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              "-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+          else
+            cmake -S . -B "build/${{ matrix.build_type }}" -G Ninja \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           fi
-
-          cmake -S . -B "build/${{ matrix.build_type }}" -G Ninja "${cmake_args[@]}"
         shell: bash
 
       - name: Build
