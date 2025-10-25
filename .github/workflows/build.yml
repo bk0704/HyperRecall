@@ -31,9 +31,9 @@ jobs:
 
       - name: Setup vcpkg (Windows)
         if: runner.os == 'Windows'
-        uses: actions/setup-vcpkg@v1
+        uses: lukka/setup-vcpkg@v1
         with:
-          triplet: x64-windows
+          vcpkgTriplet: x64-windows
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
