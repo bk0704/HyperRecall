@@ -1,0 +1,9 @@
+{
+  "themes": [
+    {
+      "name": "Default",
+      "description": "TODO: Define default theme colors and typography settings.",
+      "colors": {}
+    }
+  ]
+}

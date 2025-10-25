@@ -1,0 +1,16 @@
+/build/
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.user
+*.suo
+*.VC.db
+CMakeCache.txt
+CMakeFiles/
+cmake-build-*/
+compile_commands.json
+*.log
