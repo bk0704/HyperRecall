@@ -10,11 +10,52 @@ extern "C" {
  * @brief Declares the lifecycle management interfaces for the HyperRecall application core.
  */
 
-struct AppContext;
+#include <stdbool.h>
 
-/* TODO: Define the AppContext structure to orchestrate modules such as UI, SRS, and storage. */
-/* TODO: Declare initialization, update loop, and shutdown routines for the application lifecycle. */
-/* TODO: Add hooks for analytics, platform integrations, and configuration persistence. */
+struct ConfigHandle;
+struct PlatformHandle;
+struct DatabaseHandle;
+struct SrsHandle;
+struct SessionManager;
+struct UiContext;
+struct AnalyticsHandle;
+
+/**
+ * @brief Aggregates subsystem handles required to drive the application.
+ */
+typedef struct AppContext {
+    struct ConfigHandle *config;      /**< Loaded configuration values. */
+    struct PlatformHandle *platform;  /**< Platform/windowing state. */
+    struct DatabaseHandle *database;  /**< Database connection handle. */
+    struct SrsHandle *srs;            /**< Spaced repetition scheduler state. */
+    struct SessionManager *sessions;  /**< Study session orchestration. */
+    struct UiContext *ui;             /**< UI rendering subsystem. */
+    struct AnalyticsHandle *analytics;/**< Analytics collection and export. */
+    bool running;                     /**< Tracks whether the main loop is active. */
+} AppContext;
+
+/**
+ * @brief Bootstraps the application and all of its subsystems.
+ *
+ * @return A fully initialized application context on success, otherwise NULL.
+ */
+AppContext *app_create(void);
+
+/**
+ * @brief Runs the main application loop until shutdown.
+ *
+ * @param app The application context previously created with app_create().
+ *
+ * @return 0 on success or a non-zero error code when execution fails.
+ */
+int app_run(AppContext *app);
+
+/**
+ * @brief Releases all resources owned by the application.
+ *
+ * @param app The application context to clean up (may be NULL).
+ */
+void app_destroy(AppContext *app);
 
 #ifdef __cplusplus
 }
