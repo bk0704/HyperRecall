@@ -52,17 +52,14 @@ jobs:
 
       - name: Configure
         run: |
-          cmake_args=(
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          )
-
-          if [[ '${{ runner.os }}' == 'Windows' ]]; then
-            cmake_args+=(
-              "-DCMAKE_TOOLCHAIN_FILE=$(cygpath -u '${{ github.workspace }}/vcpkg')/scripts/buildsystems/vcpkg.cmake"
-            )
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cmake -S . -B "build/${{ matrix.build_type }}" -G Ninja \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              "-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+          else
+            cmake -S . -B "build/${{ matrix.build_type }}" -G Ninja \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           fi
-
-          cmake -S . -B "build/${{ matrix.build_type }}" -G Ninja "${cmake_args[@]}"
         shell: bash
 
       - name: Build
