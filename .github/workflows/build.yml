@@ -1,0 +1,53 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            build_type: Debug
+          - os: ubuntu-latest
+            build_type: Release
+          - os: windows-latest
+            build_type: Release
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build pkg-config libraylib-dev libsqlite3-dev
+          echo "TODO: Provide raygui.h via external/raygui/ or a system package."
+
+      - name: Setup vcpkg (Windows)
+        if: runner.os == 'Windows'
+        uses: microsoft/setup-vcpkg@v1
+        with:
+          triplet: x64-windows
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          vcpkg install raylib sqlite3
+          echo "TODO: Acquire raygui.h and set HYPERRECALL_RAYGUI_HEADER or enable HYPERRECALL_USE_SYSTEM_RAYGUI."
+
+      - name: Configure
+        run: |
+          cmake -S . -B build/${{ matrix.build_type }} -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            ${{ runner.os == 'Windows' && format('-DCMAKE_TOOLCHAIN_FILE={0}/scripts/buildsystems/vcpkg.cmake', env.VCPKG_ROOT) || '' }}
+        shell: bash
+
+      - name: Build
+        run: cmake --build build/${{ matrix.build_type }}
+        shell: bash
