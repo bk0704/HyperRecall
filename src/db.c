@@ -4,6 +4,7 @@
 
 #include <errno.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,34 +48,42 @@ static const struct Migration kMigrations[] = {
         "\nCREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);"
         "\nINSERT INTO metadata(key, value) VALUES('schema_version', '0')"
         " ON CONFLICT(key) DO NOTHING;"
-        "\nCREATE TABLE IF NOT EXISTS decks ("
+    },
+    {
+        2U,
+        "DROP TABLE IF EXISTS decks;"
+        "\nDROP TABLE IF EXISTS notes;"
+        "\nDROP TABLE IF EXISTS media;"
+        "\nDROP TABLE IF EXISTS tags;"
+        "\nDROP TABLE IF EXISTS card_tags;"
+        "\nDROP TABLE IF EXISTS sessions;"
+        "\nDROP TABLE IF EXISTS analytics_events;"
+        "\nDROP TABLE IF EXISTS reviews;"
+        "\nDROP TABLE IF EXISTS cards;"
+        "\nDROP TABLE IF EXISTS topics;"
+        "\nCREATE TABLE IF NOT EXISTS topics ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " uuid TEXT NOT NULL UNIQUE,"
-        " name TEXT NOT NULL,"
-        " description TEXT DEFAULT '',"
+        " parent_id INTEGER REFERENCES topics(id) ON DELETE SET NULL,"
+        " title TEXT NOT NULL,"
+        " summary TEXT DEFAULT '',"
         " created_at INTEGER NOT NULL,"
         " updated_at INTEGER NOT NULL,"
-        " archived INTEGER NOT NULL DEFAULT 0"
-        ");"
-        "\nCREATE TABLE IF NOT EXISTS notes ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " deck_id INTEGER NOT NULL REFERENCES decks(id) ON DELETE CASCADE,"
-        " uuid TEXT NOT NULL UNIQUE,"
-        " front TEXT NOT NULL,"
-        " back TEXT NOT NULL,"
-        " extra TEXT,"
-        " created_at INTEGER NOT NULL,"
-        " updated_at INTEGER NOT NULL"
+        " position INTEGER NOT NULL DEFAULT 0"
         ");"
         "\nCREATE TABLE IF NOT EXISTS cards ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,"
+        " topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,"
         " uuid TEXT NOT NULL UNIQUE,"
-        " due INTEGER NOT NULL DEFAULT 0,"
+        " prompt TEXT NOT NULL,"
+        " response TEXT NOT NULL,"
+        " mnemonic TEXT,"
+        " created_at INTEGER NOT NULL,"
+        " updated_at INTEGER NOT NULL,"
+        " due_at INTEGER NOT NULL DEFAULT 0,"
         " interval INTEGER NOT NULL DEFAULT 0,"
-        " ease INTEGER NOT NULL DEFAULT 250,"
-        " type INTEGER NOT NULL DEFAULT 0,"
-        " state INTEGER NOT NULL DEFAULT 0,"
+        " ease_factor INTEGER NOT NULL DEFAULT 250,"
+        " review_state INTEGER NOT NULL DEFAULT 0,"
         " suspended INTEGER NOT NULL DEFAULT 0"
         ");"
         "\nCREATE TABLE IF NOT EXISTS reviews ("
@@ -84,47 +93,17 @@ static const struct Migration kMigrations[] = {
         " rating INTEGER NOT NULL,"
         " duration_ms INTEGER NOT NULL,"
         " scheduled_interval INTEGER NOT NULL,"
-        " actual_interval INTEGER NOT NULL"
+        " actual_interval INTEGER NOT NULL,"
+        " ease_factor INTEGER NOT NULL,"
+        " review_state INTEGER NOT NULL"
         ");"
-        "\nCREATE TABLE IF NOT EXISTS media ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " note_id INTEGER REFERENCES notes(id) ON DELETE SET NULL,"
-        " uuid TEXT NOT NULL UNIQUE,"
-        " kind INTEGER NOT NULL,"
-        " path TEXT NOT NULL,"
-        " checksum TEXT,"
-        " created_at INTEGER NOT NULL"
-        ");"
-        "\nCREATE TABLE IF NOT EXISTS sessions ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " uuid TEXT NOT NULL UNIQUE,"
-        " started_at INTEGER NOT NULL,"
-        " ended_at INTEGER,"
-        " deck_id INTEGER REFERENCES decks(id) ON DELETE SET NULL,"
-        " review_count INTEGER NOT NULL DEFAULT 0,"
-        " new_count INTEGER NOT NULL DEFAULT 0,"
-        " lapsed_count INTEGER NOT NULL DEFAULT 0"
-        ");"
-        "\nCREATE TABLE IF NOT EXISTS analytics_events ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " happened_at INTEGER NOT NULL,"
-        " event_type TEXT NOT NULL,"
-        " payload TEXT"
-        ");"
-        "\nCREATE TABLE IF NOT EXISTS tags ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " uuid TEXT NOT NULL UNIQUE,"
-        " name TEXT NOT NULL UNIQUE"
-        ");"
-        "\nCREATE TABLE IF NOT EXISTS card_tags ("
-        " card_id INTEGER NOT NULL REFERENCES cards(id) ON DELETE CASCADE,"
-        " tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,"
-        " PRIMARY KEY(card_id, tag_id)"
-        ");"
-        "\nCREATE INDEX IF NOT EXISTS idx_cards_due ON cards(due);"
+        "\nCREATE INDEX IF NOT EXISTS idx_topics_parent ON topics(parent_id);"
+        "\nCREATE INDEX IF NOT EXISTS idx_topics_uuid ON topics(uuid);"
+        "\nCREATE INDEX IF NOT EXISTS idx_cards_topic ON cards(topic_id);"
+        "\nCREATE INDEX IF NOT EXISTS idx_cards_due ON cards(due_at, suspended);"
+        "\nCREATE INDEX IF NOT EXISTS idx_cards_uuid ON cards(uuid);"
         "\nCREATE INDEX IF NOT EXISTS idx_reviews_card_time ON reviews(card_id, reviewed_at);"
-        "\nCREATE INDEX IF NOT EXISTS idx_sessions_started_at ON sessions(started_at);"
-        "\nCREATE INDEX IF NOT EXISTS idx_media_note ON media(note_id);"
+        "\nCREATE INDEX IF NOT EXISTS idx_reviews_timestamp ON reviews(reviewed_at);"
     },
 };
 
@@ -194,6 +173,32 @@ static int exec_simple(sqlite3 *db, const char *sql)
         sqlite3_free(errmsg);
     }
     return rc;
+}
+
+static int bind_text_or_null(sqlite3_stmt *stmt, int index, const char *value)
+{
+    if (stmt == NULL) {
+        return SQLITE_MISUSE;
+    }
+
+    if (value != NULL) {
+        return sqlite3_bind_text(stmt, index, value, -1, SQLITE_TRANSIENT);
+    }
+
+    return sqlite3_bind_null(stmt, index);
+}
+
+static int bind_optional_int64(sqlite3_stmt *stmt, int index, sqlite3_int64 value)
+{
+    if (stmt == NULL) {
+        return SQLITE_MISUSE;
+    }
+
+    if (value > 0) {
+        return sqlite3_bind_int64(stmt, index, value);
+    }
+
+    return sqlite3_bind_null(stmt, index);
 }
 
 static int fetch_schema_version(sqlite3 *db, unsigned int *version)
@@ -643,4 +648,360 @@ int db_create_backup(DatabaseHandle *handle, const char *tag)
     }
 
     return create_backup_file(handle, tag);
+}
+
+int db_topic_prepare_insert(DatabaseHandle *handle, sqlite3_stmt **statement)
+{
+    static const char *sql =
+        "INSERT INTO topics(uuid, parent_id, title, summary, created_at, updated_at, position) "
+        "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7);";
+    return db_prepare(handle, statement, sql);
+}
+
+int db_topic_bind_insert(sqlite3_stmt *statement, const HrTopicRecord *record)
+{
+    if (statement == NULL || record == NULL || record->uuid == NULL || record->title == NULL) {
+        return SQLITE_MISUSE;
+    }
+
+    int rc = sqlite3_bind_text(statement, 1, record->uuid, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = bind_optional_int64(statement, 2, record->parent_id);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_text(statement, 3, record->title, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = bind_text_or_null(statement, 4, record->summary);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 5, record->created_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 6, record->updated_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 7, record->position);
+    return rc;
+}
+
+int db_topic_prepare_update(DatabaseHandle *handle, sqlite3_stmt **statement)
+{
+    static const char *sql =
+        "UPDATE topics SET parent_id=?2, title=?3, summary=?4, created_at=?5, updated_at=?6, position=?7 "
+        "WHERE id=?1;";
+    return db_prepare(handle, statement, sql);
+}
+
+int db_topic_bind_update(sqlite3_stmt *statement, const HrTopicRecord *record)
+{
+    if (statement == NULL || record == NULL || record->id <= 0 || record->title == NULL) {
+        return SQLITE_MISUSE;
+    }
+
+    int rc = sqlite3_bind_int64(statement, 1, record->id);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = bind_optional_int64(statement, 2, record->parent_id);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_text(statement, 3, record->title, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = bind_text_or_null(statement, 4, record->summary);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 5, record->created_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 6, record->updated_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 7, record->position);
+    return rc;
+}
+
+int db_topic_prepare_delete(DatabaseHandle *handle, sqlite3_stmt **statement)
+{
+    static const char *sql = "DELETE FROM topics WHERE id=?1;";
+    return db_prepare(handle, statement, sql);
+}
+
+int db_topic_bind_delete(sqlite3_stmt *statement, sqlite3_int64 topic_id)
+{
+    if (statement == NULL || topic_id <= 0) {
+        return SQLITE_MISUSE;
+    }
+    return sqlite3_bind_int64(statement, 1, topic_id);
+}
+
+int db_topic_prepare_select_by_uuid(DatabaseHandle *handle, sqlite3_stmt **statement)
+{
+    static const char *sql =
+        "SELECT id, parent_id, uuid, title, summary, created_at, updated_at, position "
+        "FROM topics WHERE uuid=?1;";
+    return db_prepare(handle, statement, sql);
+}
+
+int db_topic_bind_select_by_uuid(sqlite3_stmt *statement, const char *uuid)
+{
+    if (statement == NULL || uuid == NULL) {
+        return SQLITE_MISUSE;
+    }
+    return sqlite3_bind_text(statement, 1, uuid, -1, SQLITE_TRANSIENT);
+}
+
+int db_card_prepare_insert(DatabaseHandle *handle, sqlite3_stmt **statement)
+{
+    static const char *sql =
+        "INSERT INTO cards(uuid, topic_id, prompt, response, mnemonic, created_at, updated_at, due_at, interval, ease_factor, "
+        "review_state, suspended) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12);";
+    return db_prepare(handle, statement, sql);
+}
+
+int db_card_bind_insert(sqlite3_stmt *statement, const HrCardRecord *record)
+{
+    if (statement == NULL || record == NULL || record->uuid == NULL || record->prompt == NULL ||
+        record->response == NULL || record->topic_id <= 0) {
+        return SQLITE_MISUSE;
+    }
+
+    int rc = sqlite3_bind_text(statement, 1, record->uuid, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 2, record->topic_id);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_text(statement, 3, record->prompt, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_text(statement, 4, record->response, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = bind_text_or_null(statement, 5, record->mnemonic);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 6, record->created_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 7, record->updated_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 8, record->due_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 9, record->interval);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 10, record->ease_factor);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 11, record->review_state);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 12, record->suspended ? 1 : 0);
+    return rc;
+}
+
+int db_card_prepare_update(DatabaseHandle *handle, sqlite3_stmt **statement)
+{
+    static const char *sql =
+        "UPDATE cards SET topic_id=?2, prompt=?3, response=?4, mnemonic=?5, created_at=?6, updated_at=?7, due_at=?8, interval=?9, "
+        "ease_factor=?10, review_state=?11, suspended=?12 WHERE id=?1;";
+    return db_prepare(handle, statement, sql);
+}
+
+int db_card_bind_update(sqlite3_stmt *statement, const HrCardRecord *record)
+{
+    if (statement == NULL || record == NULL || record->id <= 0 || record->prompt == NULL || record->response == NULL ||
+        record->topic_id <= 0) {
+        return SQLITE_MISUSE;
+    }
+
+    int rc = sqlite3_bind_int64(statement, 1, record->id);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 2, record->topic_id);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_text(statement, 3, record->prompt, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_text(statement, 4, record->response, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = bind_text_or_null(statement, 5, record->mnemonic);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 6, record->created_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 7, record->updated_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 8, record->due_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 9, record->interval);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 10, record->ease_factor);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 11, record->review_state);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 12, record->suspended ? 1 : 0);
+    return rc;
+}
+
+int db_card_prepare_delete(DatabaseHandle *handle, sqlite3_stmt **statement)
+{
+    static const char *sql = "DELETE FROM cards WHERE id=?1;";
+    return db_prepare(handle, statement, sql);
+}
+
+int db_card_bind_delete(sqlite3_stmt *statement, sqlite3_int64 card_id)
+{
+    if (statement == NULL || card_id <= 0) {
+        return SQLITE_MISUSE;
+    }
+    return sqlite3_bind_int64(statement, 1, card_id);
+}
+
+int db_card_prepare_select_due(DatabaseHandle *handle, sqlite3_stmt **statement)
+{
+    static const char *sql =
+        "SELECT id, topic_id, uuid, prompt, response, mnemonic, created_at, updated_at, due_at, interval, ease_factor, "
+        "review_state, suspended FROM cards WHERE suspended=0 AND due_at <= ?1 ORDER BY due_at ASC LIMIT ?2;";
+    return db_prepare(handle, statement, sql);
+}
+
+int db_card_bind_select_due(sqlite3_stmt *statement, const HrCardDueQuery *query)
+{
+    if (statement == NULL || query == NULL || query->limit <= 0) {
+        return SQLITE_MISUSE;
+    }
+
+    int rc = sqlite3_bind_int64(statement, 1, query->latest_due_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 2, query->limit);
+    return rc;
+}
+
+int db_review_prepare_bulk_insert(DatabaseHandle *handle, sqlite3_stmt **statement)
+{
+    static const char *sql =
+        "INSERT INTO reviews(card_id, reviewed_at, rating, duration_ms, scheduled_interval, actual_interval, ease_factor, "
+        "review_state) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);";
+    return db_prepare(handle, statement, sql);
+}
+
+int db_review_bind_bulk_insert(sqlite3_stmt *statement, const HrReviewRecord *record)
+{
+    if (statement == NULL || record == NULL || record->card_id <= 0) {
+        return SQLITE_MISUSE;
+    }
+
+    int rc = sqlite3_bind_int64(statement, 1, record->card_id);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 2, record->reviewed_at);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 3, record->rating);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 4, record->duration_ms);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 5, record->scheduled_interval);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 6, record->actual_interval);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 7, record->ease_factor);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int(statement, 8, record->review_state);
+    return rc;
+}
+
+int db_analytics_prepare_review_summary(DatabaseHandle *handle, sqlite3_stmt **statement)
+{
+    static const char *sql =
+        "SELECT strftime('%Y-%m-%d', reviewed_at, 'unixepoch') AS day, COUNT(*) AS total_reviews, "
+        "SUM(CASE WHEN rating >= 3 THEN 1 ELSE 0 END) AS successful_reviews, AVG(duration_ms) AS avg_duration_ms "
+        "FROM reviews WHERE reviewed_at BETWEEN ?1 AND ?2 GROUP BY day ORDER BY day;";
+    return db_prepare(handle, statement, sql);
+}
+
+int db_analytics_bind_review_summary(sqlite3_stmt *statement, const HrReviewSummaryQuery *query)
+{
+    if (statement == NULL || query == NULL) {
+        return SQLITE_MISUSE;
+    }
+
+    sqlite3_int64 start = query->start_at >= 0 ? query->start_at : 0;
+    sqlite3_int64 end = query->end_at > 0 ? query->end_at : (sqlite3_int64)INT64_MAX;
+
+    int rc = sqlite3_bind_int64(statement, 1, start);
+    if (rc != SQLITE_OK) {
+        return rc;
+    }
+    rc = sqlite3_bind_int64(statement, 2, end);
+    return rc;
+}
+
+int db_analytics_prepare_topic_card_totals(DatabaseHandle *handle, sqlite3_stmt **statement)
+{
+    static const char *sql =
+        "SELECT t.id, t.uuid, t.title, COUNT(c.id) AS card_count FROM topics t "
+        "LEFT JOIN cards c ON c.topic_id = t.id GROUP BY t.id ORDER BY t.position, t.title;";
+    return db_prepare(handle, statement, sql);
 }
