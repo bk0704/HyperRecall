@@ -428,7 +428,7 @@ void render_draw_code_block(const HrRenderContext *context,
     Color text_color = resolve_palette_color(context, HR_THEME_COLOR_CODE_TEXT, WHITE);
 
     DrawRectangleRounded(bounds, 0.08f, 8, background);
-    DrawRectangleRoundedLines(bounds, 0.08f, 8, border);
+    DrawRectangleRoundedLines(bounds, 0.08f, 8, 1.0f, border);
 
     Font monospace = resolve_font(context->fonts.monospace);
     const float font_size = (context->base_font_size * 0.9f) * context->dpi_scale;
@@ -484,7 +484,7 @@ float render_draw_line_chart(const HrRenderContext *context,
         options = &defaults;
     }
 
-    DrawRectangleRoundedLines(bounds, 0.05f, 6, options->axis_color);
+    DrawRectangleRoundedLines(bounds, 0.05f, 6, 1.0f, options->axis_color);
 
     float min_value = samples[0];
     float max_value = samples[0];

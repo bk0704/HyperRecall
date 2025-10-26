@@ -11,6 +11,7 @@ extern "C" {
  */
 
 #include <stdbool.h>
+#include <stddef.h>
 
 struct ConfigHandle;
 struct PlatformHandle;
