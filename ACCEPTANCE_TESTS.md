@@ -232,7 +232,7 @@ Required hotkeys: ↑/↓, Enter, A, /, F, Del, E, Ctrl+F, Ctrl+S, Ctrl+P, Esc
 ## Assets
 
 - ✅ **Inter font** (Regular, SemiBold)
-  - 803 KB total, OFL licensed
+  - Regular 398 KB, SemiBold 405 KB, OFL licensed
 - ✅ **JetBrains Mono** (Regular)
   - 268 KB, OFL licensed
 - ✅ **OFL license** for fonts
@@ -315,8 +315,8 @@ The main gaps are:
 - ⚠️ Media file copying (placeholder for future enhancement)
 
 **Asset Status**:
-- ✅ Inter font (Regular 398KB, SemiBold 405KB)
-- ✅ JetBrains Mono font (Regular 268KB)
+- ✅ Inter font (Regular 398 KB, SemiBold 405 KB)
+- ✅ JetBrains Mono font (Regular 268 KB)
 - ✅ 18 PNG icons (24x24, status/action/session)
 
 Estimated remaining effort: 3 days for runtime verification, bug fixes, and Windows testing.
