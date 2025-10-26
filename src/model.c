@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static const char *const CARD_TYPE_NAMES[] = {
+static const char* const CARD_TYPE_NAMES[] = {
     [HR_CARD_TYPE_SHORT_ANSWER] = "ShortAnswer",
     [HR_CARD_TYPE_CLOZE] = "Cloze",
     [HR_CARD_TYPE_MULTIPLE_CHOICE_SINGLE] = "MultipleChoice",
@@ -12,17 +12,19 @@ static const char *const CARD_TYPE_NAMES[] = {
     [HR_CARD_TYPE_TRUE_FALSE] = "TrueFalse",
     [HR_CARD_TYPE_IMAGE_OCCLUSION] = "ImageOcclusion",
     [HR_CARD_TYPE_AUDIO_RECALL] = "AudioRecall",
+    [HR_CARD_TYPE_TYPING] = "Typing",
+    [HR_CARD_TYPE_ORDERING] = "Ordering",
+    [HR_CARD_TYPE_MATCHING] = "Matching",
 };
 
-static const char *const MEDIA_TYPE_NAMES[] = {
+static const char* const MEDIA_TYPE_NAMES[] = {
     [HR_MEDIA_TYPE_IMAGE] = "Image",
     [HR_MEDIA_TYPE_AUDIO] = "Audio",
     [HR_MEDIA_TYPE_VIDEO] = "Video",
     [HR_MEDIA_TYPE_LATEX] = "Latex",
 };
 
-static int hr_ascii_casecmp(const char *lhs, const char *rhs)
-{
+static int hr_ascii_casecmp(const char* lhs, const char* rhs) {
     if (!lhs || !rhs) {
         return (lhs == rhs) ? 0 : (lhs ? 1 : -1);
     }
@@ -38,8 +40,7 @@ static int hr_ascii_casecmp(const char *lhs, const char *rhs)
     return tolower((unsigned char)*lhs) - tolower((unsigned char)*rhs);
 }
 
-static bool hr_string_is_blank(const char *text)
-{
+static bool hr_string_is_blank(const char* text) {
     if (!text) {
         return true;
     }
@@ -52,8 +53,8 @@ static bool hr_string_is_blank(const char *text)
     return true;
 }
 
-static void hr_validation_error_set(HrValidationError *error, const char *field, const char *message)
-{
+static void hr_validation_error_set(HrValidationError* error, const char* field,
+                                    const char* message) {
     if (!error) {
         return;
     }
@@ -65,22 +66,20 @@ static void hr_validation_error_set(HrValidationError *error, const char *field,
     }
 }
 
-const char *hr_card_type_to_string(HrCardType type)
-{
+const char* hr_card_type_to_string(HrCardType type) {
     if (type < 0 || (size_t)type >= (sizeof CARD_TYPE_NAMES / sizeof CARD_TYPE_NAMES[0])) {
         return "Unknown";
     }
-    const char *name = CARD_TYPE_NAMES[type];
+    const char* name = CARD_TYPE_NAMES[type];
     return name ? name : "Unknown";
 }
 
-bool hr_card_type_from_string(const char *text, HrCardType *out_type)
-{
+bool hr_card_type_from_string(const char* text, HrCardType* out_type) {
     if (!text || !out_type) {
         return false;
     }
     for (size_t i = 0; i < (sizeof CARD_TYPE_NAMES / sizeof CARD_TYPE_NAMES[0]); ++i) {
-        const char *name = CARD_TYPE_NAMES[i];
+        const char* name = CARD_TYPE_NAMES[i];
         if (name && hr_ascii_casecmp(name, text) == 0) {
             *out_type = (HrCardType)i;
             return true;
@@ -89,22 +88,20 @@ bool hr_card_type_from_string(const char *text, HrCardType *out_type)
     return false;
 }
 
-const char *hr_media_type_to_string(HrMediaType type)
-{
+const char* hr_media_type_to_string(HrMediaType type) {
     if (type < 0 || (size_t)type >= (sizeof MEDIA_TYPE_NAMES / sizeof MEDIA_TYPE_NAMES[0])) {
         return "Unknown";
     }
-    const char *name = MEDIA_TYPE_NAMES[type];
+    const char* name = MEDIA_TYPE_NAMES[type];
     return name ? name : "Unknown";
 }
 
-bool hr_media_type_from_string(const char *text, HrMediaType *out_type)
-{
+bool hr_media_type_from_string(const char* text, HrMediaType* out_type) {
     if (!text || !out_type) {
         return false;
     }
     for (size_t i = 0; i < (sizeof MEDIA_TYPE_NAMES / sizeof MEDIA_TYPE_NAMES[0]); ++i) {
-        const char *name = MEDIA_TYPE_NAMES[i];
+        const char* name = MEDIA_TYPE_NAMES[i];
         if (name && hr_ascii_casecmp(name, text) == 0) {
             *out_type = (HrMediaType)i;
             return true;
@@ -113,8 +110,7 @@ bool hr_media_type_from_string(const char *text, HrMediaType *out_type)
     return false;
 }
 
-void hr_card_extras_init(HrCardExtras *extras, HrCardType type)
-{
+void hr_card_extras_init(HrCardExtras* extras, HrCardType type) {
     if (!extras) {
         return;
     }
@@ -151,24 +147,40 @@ void hr_card_extras_init(HrCardExtras *extras, HrCardType type)
         extras->data.audio.require_transcript = false;
         extras->data.audio.reference_text = NULL;
         break;
+    case HR_CARD_TYPE_TYPING:
+        extras->data.typing.regex_pattern = NULL;
+        extras->data.typing.case_sensitive = false;
+        extras->data.typing.sample_answer = NULL;
+        break;
+    case HR_CARD_TYPE_ORDERING:
+        extras->data.ordering.items = NULL;
+        extras->data.ordering.item_count = 0;
+        extras->data.ordering.partial_credit = true;
+        break;
+    case HR_CARD_TYPE_MATCHING:
+        extras->data.matching.pairs = NULL;
+        extras->data.matching.pair_count = 0;
+        extras->data.matching.shuffle_right = true;
+        break;
     default:
         break;
     }
 }
 
-static bool hr_card_choice_options_validate(const HrCardChoiceExtras *choice, HrValidationError *error)
-{
+static bool hr_card_choice_options_validate(const HrCardChoiceExtras* choice,
+                                            HrValidationError*        error) {
     if (!choice) {
         hr_validation_error_set(error, "extras", "Choice extras missing");
         return false;
     }
     if (!choice->options || choice->option_count < 2) {
-        hr_validation_error_set(error, "options", "Multiple choice cards require at least two options");
+        hr_validation_error_set(error, "options",
+                                "Multiple choice cards require at least two options");
         return false;
     }
     size_t correct_count = 0;
     for (size_t i = 0; i < choice->option_count; ++i) {
-        const HrCardChoiceOption *option = &choice->options[i];
+        const HrCardChoiceOption* option = &choice->options[i];
         if (!option->value || hr_string_is_blank(option->value)) {
             hr_validation_error_set(error, "options", "Option text cannot be blank");
             return false;
@@ -182,14 +194,15 @@ static bool hr_card_choice_options_validate(const HrCardChoiceExtras *choice, Hr
         return false;
     }
     if (!choice->allow_multiple && correct_count > 1) {
-        hr_validation_error_set(error, "options", "Single answer questions cannot have multiple correct options");
+        hr_validation_error_set(error, "options",
+                                "Single answer questions cannot have multiple correct options");
         return false;
     }
     return true;
 }
 
-static bool hr_card_short_answer_validate(const HrCardShortAnswerExtras *extras, HrValidationError *error)
-{
+static bool hr_card_short_answer_validate(const HrCardShortAnswerExtras* extras,
+                                          HrValidationError*             error) {
     if (!extras) {
         hr_validation_error_set(error, "extras", "Short answer extras missing");
         return false;
@@ -198,8 +211,7 @@ static bool hr_card_short_answer_validate(const HrCardShortAnswerExtras *extras,
     return true;
 }
 
-static bool hr_card_cloze_validate(const HrCardClozeExtras *extras, HrValidationError *error)
-{
+static bool hr_card_cloze_validate(const HrCardClozeExtras* extras, HrValidationError* error) {
     if (!extras) {
         hr_validation_error_set(error, "extras", "Cloze extras missing");
         return false;
@@ -211,8 +223,8 @@ static bool hr_card_cloze_validate(const HrCardClozeExtras *extras, HrValidation
     return true;
 }
 
-static bool hr_card_true_false_validate(const HrCardTrueFalseExtras *extras, HrValidationError *error)
-{
+static bool hr_card_true_false_validate(const HrCardTrueFalseExtras* extras,
+                                        HrValidationError*           error) {
     if (!extras) {
         hr_validation_error_set(error, "extras", "True/False extras missing");
         return false;
@@ -221,42 +233,104 @@ static bool hr_card_true_false_validate(const HrCardTrueFalseExtras *extras, HrV
     return true;
 }
 
-static bool hr_card_image_validate(const HrCardImageOcclusionExtras *extras, HrValidationError *error)
-{
+static bool hr_card_image_validate(const HrCardImageOcclusionExtras* extras,
+                                   HrValidationError*                error) {
     if (!extras) {
         hr_validation_error_set(error, "extras", "Image occlusion extras missing");
         return false;
     }
     if (!extras->image_uuid || hr_string_is_blank(extras->image_uuid)) {
-        hr_validation_error_set(error, "image_uuid", "Image occlusion cards must reference an image");
+        hr_validation_error_set(error, "image_uuid",
+                                "Image occlusion cards must reference an image");
         return false;
     }
     if (extras->mask_count == 0) {
-        hr_validation_error_set(error, "mask_count", "Image occlusion cards require at least one mask");
+        hr_validation_error_set(error, "mask_count",
+                                "Image occlusion cards require at least one mask");
         return false;
     }
     return true;
 }
 
-static bool hr_card_audio_validate(const HrCardAudioExtras *extras, HrValidationError *error)
-{
+static bool hr_card_audio_validate(const HrCardAudioExtras* extras, HrValidationError* error) {
     if (!extras) {
         hr_validation_error_set(error, "extras", "Audio recall extras missing");
         return false;
     }
     if (!extras->audio_uuid || hr_string_is_blank(extras->audio_uuid)) {
-        hr_validation_error_set(error, "audio_uuid", "Audio recall cards must reference an audio asset");
+        hr_validation_error_set(error, "audio_uuid",
+                                "Audio recall cards must reference an audio asset");
         return false;
     }
     if (extras->require_transcript && hr_string_is_blank(extras->reference_text)) {
-        hr_validation_error_set(error, "reference_text", "A transcript is required when transcription is enforced");
+        hr_validation_error_set(error, "reference_text",
+                                "A transcript is required when transcription is enforced");
         return false;
     }
     return true;
 }
 
-bool hr_card_extras_validate(const HrCardExtras *extras, HrValidationError *error)
-{
+static bool hr_card_typing_validate(const HrCardTypingExtras* extras, HrValidationError* error) {
+    if (!extras) {
+        hr_validation_error_set(error, "extras", "Typing extras missing");
+        return false;
+    }
+    if (!extras->regex_pattern || hr_string_is_blank(extras->regex_pattern)) {
+        hr_validation_error_set(error, "regex_pattern", "Typing cards require a regex pattern");
+        return false;
+    }
+    return true;
+}
+
+static bool hr_card_ordering_validate(const HrCardOrderingExtras* extras,
+                                      HrValidationError*          error) {
+    if (!extras) {
+        hr_validation_error_set(error, "extras", "Ordering extras missing");
+        return false;
+    }
+    if (!extras->items || extras->item_count < 2) {
+        hr_validation_error_set(error, "items", "Ordering cards require at least two items");
+        return false;
+    }
+    for (size_t i = 0; i < extras->item_count; ++i) {
+        const HrCardOrderingItem* item = &extras->items[i];
+        if (!item->value || hr_string_is_blank(item->value)) {
+            hr_validation_error_set(error, "items", "Ordering item text cannot be blank");
+            return false;
+        }
+        if (item->correct_position < 0 || (size_t)item->correct_position >= extras->item_count) {
+            hr_validation_error_set(error, "items", "Ordering item has invalid position");
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool hr_card_matching_validate(const HrCardMatchingExtras* extras,
+                                      HrValidationError*          error) {
+    if (!extras) {
+        hr_validation_error_set(error, "extras", "Matching extras missing");
+        return false;
+    }
+    if (!extras->pairs || extras->pair_count < 2) {
+        hr_validation_error_set(error, "pairs", "Matching cards require at least two pairs");
+        return false;
+    }
+    for (size_t i = 0; i < extras->pair_count; ++i) {
+        const HrCardMatchingPair* pair = &extras->pairs[i];
+        if (!pair->left || hr_string_is_blank(pair->left)) {
+            hr_validation_error_set(error, "pairs", "Matching pair left side cannot be blank");
+            return false;
+        }
+        if (!pair->right || hr_string_is_blank(pair->right)) {
+            hr_validation_error_set(error, "pairs", "Matching pair right side cannot be blank");
+            return false;
+        }
+    }
+    return true;
+}
+
+bool hr_card_extras_validate(const HrCardExtras* extras, HrValidationError* error) {
     if (!extras) {
         hr_validation_error_set(error, "extras", "Card extras missing");
         return false;
@@ -275,14 +349,19 @@ bool hr_card_extras_validate(const HrCardExtras *extras, HrValidationError *erro
         return hr_card_image_validate(&extras->data.image, error);
     case HR_CARD_TYPE_AUDIO_RECALL:
         return hr_card_audio_validate(&extras->data.audio, error);
+    case HR_CARD_TYPE_TYPING:
+        return hr_card_typing_validate(&extras->data.typing, error);
+    case HR_CARD_TYPE_ORDERING:
+        return hr_card_ordering_validate(&extras->data.ordering, error);
+    case HR_CARD_TYPE_MATCHING:
+        return hr_card_matching_validate(&extras->data.matching, error);
     default:
         hr_validation_error_set(error, "extras", "Unsupported card type for extras validation");
         return false;
     }
 }
 
-bool hr_card_media_list_validate(const HrCardMediaList *media, HrValidationError *error)
-{
+bool hr_card_media_list_validate(const HrCardMediaList* media, HrValidationError* error) {
     if (!media) {
         hr_validation_error_set(error, "media", "Media list missing");
         return false;
@@ -292,7 +371,7 @@ bool hr_card_media_list_validate(const HrCardMediaList *media, HrValidationError
         return false;
     }
     for (size_t i = 0; i < media->count; ++i) {
-        const HrCardMediaLink *link = &media->items[i];
+        const HrCardMediaLink* link = &media->items[i];
         if (!link->identifier || hr_string_is_blank(link->identifier)) {
             hr_validation_error_set(error, "media", "Media identifier cannot be blank");
             return false;
@@ -305,8 +384,7 @@ bool hr_card_media_list_validate(const HrCardMediaList *media, HrValidationError
     return true;
 }
 
-bool hr_card_payload_validate(const HrCardPayload *payload, HrValidationError *error)
-{
+bool hr_card_payload_validate(const HrCardPayload* payload, HrValidationError* error) {
     if (!payload) {
         hr_validation_error_set(error, "payload", "Payload missing");
         return false;
@@ -332,8 +410,7 @@ bool hr_card_payload_validate(const HrCardPayload *payload, HrValidationError *e
     return true;
 }
 
-bool hr_card_validate(const HrCard *card, HrValidationError *error)
-{
+bool hr_card_validate(const HrCard* card, HrValidationError* error) {
     if (!card) {
         hr_validation_error_set(error, "card", "Card missing");
         return false;
@@ -359,8 +436,7 @@ bool hr_card_validate(const HrCard *card, HrValidationError *error)
     return true;
 }
 
-void hr_card_from_record(HrCard *card, const HrCardRecord *record, HrCardType type)
-{
+void hr_card_from_record(HrCard* card, const HrCardRecord* record, HrCardType type) {
     if (!card || !record) {
         return;
     }
@@ -383,8 +459,7 @@ void hr_card_from_record(HrCard *card, const HrCardRecord *record, HrCardType ty
     card->media.count = 0;
 }
 
-void hr_card_to_record(HrCardRecord *record, const HrCard *card)
-{
+void hr_card_to_record(HrCardRecord* record, const HrCard* card) {
     if (!record || !card) {
         return;
     }
@@ -403,8 +478,7 @@ void hr_card_to_record(HrCardRecord *record, const HrCard *card)
     record->suspended = card->suspended;
 }
 
-void hr_card_payload_from_card(HrCardPayload *payload, const HrCard *card)
-{
+void hr_card_payload_from_card(HrCardPayload* payload, const HrCard* card) {
     if (!payload || !card) {
         return;
     }
@@ -416,8 +490,7 @@ void hr_card_payload_from_card(HrCardPayload *payload, const HrCard *card)
     payload->media = card->media;
 }
 
-bool hr_card_apply_payload(HrCard *card, const HrCardPayload *payload, HrValidationError *error)
-{
+bool hr_card_apply_payload(HrCard* card, const HrCardPayload* payload, HrValidationError* error) {
     if (!card) {
         hr_validation_error_set(error, "card", "Card missing");
         return false;
@@ -434,8 +507,7 @@ bool hr_card_apply_payload(HrCard *card, const HrCardPayload *payload, HrValidat
     return true;
 }
 
-void hr_topic_from_record(HrTopic *topic, const HrTopicRecord *record)
-{
+void hr_topic_from_record(HrTopic* topic, const HrTopicRecord* record) {
     if (!topic || !record) {
         return;
     }
@@ -449,8 +521,7 @@ void hr_topic_from_record(HrTopic *topic, const HrTopicRecord *record)
     topic->position = record->position;
 }
 
-void hr_topic_to_record(HrTopicRecord *record, const HrTopic *topic)
-{
+void hr_topic_to_record(HrTopicRecord* record, const HrTopic* topic) {
     if (!record || !topic) {
         return;
     }
@@ -464,8 +535,7 @@ void hr_topic_to_record(HrTopicRecord *record, const HrTopic *topic)
     record->position = topic->position;
 }
 
-bool hr_topic_payload_validate(const HrTopicPayload *payload, HrValidationError *error)
-{
+bool hr_topic_payload_validate(const HrTopicPayload* payload, HrValidationError* error) {
     if (!payload) {
         hr_validation_error_set(error, "payload", "Payload missing");
         return false;
@@ -477,8 +547,8 @@ bool hr_topic_payload_validate(const HrTopicPayload *payload, HrValidationError 
     return true;
 }
 
-bool hr_topic_apply_payload(HrTopic *topic, const HrTopicPayload *payload, HrValidationError *error)
-{
+bool hr_topic_apply_payload(HrTopic* topic, const HrTopicPayload* payload,
+                            HrValidationError* error) {
     if (!topic) {
         hr_validation_error_set(error, "topic", "Topic missing");
         return false;
