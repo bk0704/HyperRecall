@@ -19,6 +19,7 @@ struct SrsHandle;
 struct SessionManager;
 struct UiContext;
 struct AnalyticsHandle;
+struct HrThemeManager;
 
 /**
  * @brief Aggregates subsystem handles required to drive the application.
@@ -31,6 +32,7 @@ typedef struct AppContext {
     struct SessionManager *sessions;  /**< Study session orchestration. */
     struct UiContext *ui;             /**< UI rendering subsystem. */
     struct AnalyticsHandle *analytics;/**< Analytics collection and export. */
+    struct HrThemeManager *themes;    /**< Theme palette manager. */
     bool running;                     /**< Tracks whether the main loop is active. */
 } AppContext;
 
