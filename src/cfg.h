@@ -41,8 +41,25 @@ typedef struct HrDatabaseConfig {
  * @brief Configuration for user interface behaviour.
  */
 typedef struct HrUiConfig {
-    unsigned int scale_percent; /**< Interface scale multiplier (percentage). */
+    unsigned int scale_percent;      /**< Interface scale multiplier (percentage). */
+    unsigned int font_size_pt;       /**< Base font size in points for body text. */
+    char theme_palette[64];          /**< Active theme palette identifier. */
 } HrUiConfig;
+
+/**
+ * @brief Configuration for study planning and saved queries.
+ */
+typedef struct HrStudyConfig {
+    char exam_date[32];      /**< ISO-8601 encoded target exam date (YYYY-MM-DD). */
+    char saved_filters[512]; /**< Semicolon-delimited list of saved search filters. */
+} HrStudyConfig;
+
+/**
+ * @brief Configuration for workspace persistence behaviour.
+ */
+typedef struct HrWorkspaceConfig {
+    unsigned int autosave_minutes; /**< Autosave cadence in minutes (0 disables autosave). */
+} HrWorkspaceConfig;
 
 /**
  * @brief Configuration for analytics capture.
@@ -67,6 +84,8 @@ typedef struct HrPathConfig {
     char config_dir[PATH_MAX];   /**< Root directory for configuration files. */
     char cache_dir[PATH_MAX];    /**< Directory for cache/temporary files. */
     char settings_path[PATH_MAX];/**< Fully qualified path to the settings file. */
+    char window_state_path[PATH_MAX]; /**< Path to the persisted window geometry file. */
+    char autosave_dir[PATH_MAX];      /**< Directory where autosave snapshots are stored. */
 } HrPathConfig;
 
 /**
@@ -78,6 +97,8 @@ typedef struct HrConfig {
     HrUiConfig ui;                /**< UI preferences. */
     HrAnalyticsConfig analytics;  /**< Analytics settings. */
     HrSrsConfig srs;              /**< Spaced repetition scheduler defaults. */
+    HrStudyConfig study;          /**< Study planning metadata. */
+    HrWorkspaceConfig workspace;  /**< Workspace persistence settings. */
 } HrConfig;
 
 /**
