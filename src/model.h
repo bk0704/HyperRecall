@@ -39,6 +39,10 @@ typedef enum HrCardType {
     HR_CARD_TYPE_CODE_OUTPUT,
     HR_CARD_TYPE_DEBUG_FIX,
     HR_CARD_TYPE_COMPARE,
+    HR_CARD_TYPE_EXPLAIN,
+    HR_CARD_TYPE_PRACTICAL_TASK,
+    HR_CARD_TYPE_LABEL_DIAGRAM,
+    HR_CARD_TYPE_AUDIO_PROMPT,
 } HrCardType;
 
 typedef enum HrMediaType {
@@ -137,6 +141,41 @@ typedef struct HrCardCompareExtras {
     const char* expected_comparison;
 } HrCardCompareExtras;
 
+typedef struct HrCardExplainExtras {
+    const char* topic;
+    const char* rubric;
+    size_t      min_words;
+    bool        require_keywords;
+    const char* keywords;
+} HrCardExplainExtras;
+
+typedef struct HrCardPracticalTaskExtras {
+    const char* task_description;
+    const char* success_criteria;
+    const char* hints;
+    bool        requires_verification;
+} HrCardPracticalTaskExtras;
+
+typedef struct HrCardLabelItem {
+    const char* label;
+    int         x_position;
+    int         y_position;
+} HrCardLabelItem;
+
+typedef struct HrCardLabelDiagramExtras {
+    const char*              diagram_uuid;
+    const HrCardLabelItem*   labels;
+    size_t                   label_count;
+    bool                     require_exact;
+} HrCardLabelDiagramExtras;
+
+typedef struct HrCardAudioPromptExtras {
+    const char* audio_uuid;
+    const char* question_text;
+    bool        allow_replay;
+    int         max_replays;
+} HrCardAudioPromptExtras;
+
 typedef struct HrCardExtras {
     HrCardType type;
     union {
@@ -152,6 +191,10 @@ typedef struct HrCardExtras {
         HrCardCodeOutputExtras     code_output;
         HrCardDebugFixExtras       debug_fix;
         HrCardCompareExtras        compare;
+        HrCardExplainExtras        explain;
+        HrCardPracticalTaskExtras  practical_task;
+        HrCardLabelDiagramExtras   label_diagram;
+        HrCardAudioPromptExtras    audio_prompt;
     } data;
 } HrCardExtras;
 
