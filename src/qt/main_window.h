@@ -4,9 +4,11 @@
 #include <QMainWindow>
 
 class QLabel;
+class QTimer;
 
 extern "C" {
 #include "../app.h"
+#include "../ui.h"
 }
 
 /**
@@ -28,15 +30,25 @@ protected:
 private slots:
     void onFileExit();
     void onHelpAbout();
+    void onViewStudy();
+    void onViewAnalytics();
+    void onViewLibrary();
     void processFrame();
 
 private:
     void createMenus();
     void createStatusBar();
+    void updateWindowTitle();
     
     AppContext *m_app;
     QLabel *m_statusLabel;
     QTimer *m_frameTimer;
+    UiScreenId m_currentScreen;
+    
+    // Menu actions
+    QAction *m_studyAction;
+    QAction *m_analyticsAction;
+    QAction *m_libraryAction;
 };
 
 #endif /* HYPERRECALL_MAIN_WINDOW_H */

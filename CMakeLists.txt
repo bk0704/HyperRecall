@@ -152,13 +152,19 @@ if(HYPERRECALL_USE_QT6)
         src/main_qt.cpp
         src/qt/qt_platform.cpp
         src/qt/qt_ui.cpp
-        src/qt/main_window.cpp)
+        src/qt/main_window.cpp
+        src/qt/study_screen.cpp
+        src/qt/analytics_screen.cpp
+        src/qt/library_screen.cpp)
     set(HYPERRECALL_BACKEND_HEADERS
         src/platform.h
         src/ui.h
         src/qt/qt_platform.h
         src/qt/qt_ui.h
-        src/qt/main_window.h)
+        src/qt/main_window.h
+        src/qt/study_screen.h
+        src/qt/analytics_screen.h
+        src/qt/library_screen.h)
 else()
     set(HYPERRECALL_BACKEND_SOURCES
         src/main.c

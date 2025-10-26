@@ -1,5 +1,6 @@
 #include "main_window.h"
 #include "qt_platform.h"
+#include "qt_ui.h"
 
 #include <QApplication>
 #include <QCloseEvent>
@@ -21,31 +22,13 @@ MainWindow::MainWindow(QWidget *parent)
     , m_app(nullptr)
     , m_statusLabel(nullptr)
     , m_frameTimer(nullptr)
+    , m_currentScreen(UI_SCREEN_STUDY)
+    , m_studyAction(nullptr)
+    , m_analyticsAction(nullptr)
+    , m_libraryAction(nullptr)
 {
     setWindowTitle(tr("HyperRecall"));
     resize(1280, 720);
-
-    // Create central widget (placeholder for now)
-    auto *centralWidget = new QWidget(this);
-    auto *layout = new QVBoxLayout(centralWidget);
-    
-    auto *placeholderLabel = new QLabel(tr("HyperRecall - Qt6 Backend"), centralWidget);
-    placeholderLabel->setAlignment(Qt::AlignCenter);
-    QFont font = placeholderLabel->font();
-    font.setPointSize(24);
-    placeholderLabel->setFont(font);
-    layout->addWidget(placeholderLabel);
-    
-    auto *infoLabel = new QLabel(
-        tr("Application initialized successfully.\n"
-           "Core subsystems: Config, Database, Analytics, Sessions.\n\n"
-           "This is a minimal Qt6 UI backend. Full UI features to be implemented."),
-        centralWidget);
-    infoLabel->setAlignment(Qt::AlignCenter);
-    infoLabel->setWordWrap(true);
-    layout->addWidget(infoLabel);
-    
-    setCentralWidget(centralWidget);
 
     createMenus();
     createStatusBar();
@@ -66,6 +49,14 @@ MainWindow::~MainWindow()
 void MainWindow::setAppContext(AppContext *app)
 {
     m_app = app;
+    
+    // Set the UI widget as central widget
+    if (app && app->ui) {
+        auto *qtUi = reinterpret_cast<QtUiContext *>(app->ui);
+        setCentralWidget(qtUi->widget());
+    }
+    
+    updateWindowTitle();
 }
 
 void MainWindow::startEventLoop()
@@ -84,6 +75,28 @@ void MainWindow::createMenus()
     exitAction->setShortcut(QKeySequence::Quit);
     exitAction->setStatusTip(tr("Exit the application"));
     connect(exitAction, &QAction::triggered, this, &MainWindow::onFileExit);
+
+    // View menu
+    QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
+    
+    m_studyAction = viewMenu->addAction(tr("&Study"));
+    m_studyAction->setShortcut(QKeySequence(Qt::Key_F1));
+    m_studyAction->setStatusTip(tr("Switch to study screen"));
+    m_studyAction->setCheckable(true);
+    m_studyAction->setChecked(true);
+    connect(m_studyAction, &QAction::triggered, this, &MainWindow::onViewStudy);
+    
+    m_analyticsAction = viewMenu->addAction(tr("&Analytics"));
+    m_analyticsAction->setShortcut(QKeySequence(Qt::Key_F2));
+    m_analyticsAction->setStatusTip(tr("Switch to analytics screen"));
+    m_analyticsAction->setCheckable(true);
+    connect(m_analyticsAction, &QAction::triggered, this, &MainWindow::onViewAnalytics);
+    
+    m_libraryAction = viewMenu->addAction(tr("&Library"));
+    m_libraryAction->setShortcut(QKeySequence(Qt::Key_F3));
+    m_libraryAction->setStatusTip(tr("Switch to library screen"));
+    m_libraryAction->setCheckable(true);
+    connect(m_libraryAction, &QAction::triggered, this, &MainWindow::onViewLibrary);
 
     // Help menu
     QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
@@ -123,8 +136,70 @@ void MainWindow::onHelpAbout()
         tr("<h2>HyperRecall</h2>"
            "<p>Version 0.1.0</p>"
            "<p>A spaced repetition learning application.</p>"
-           "<p>Qt6 UI Backend</p>"
+           "<p><b>Qt6 UI Backend - Functional Prototype</b></p>"
+           "<p>All three main screens are implemented with placeholder content.</p>"
            "<p>Copyright © 2024</p>"));
+}
+
+void MainWindow::onViewStudy()
+{
+    if (m_app && m_app->ui) {
+        ui_request_screen(m_app->ui, UI_SCREEN_STUDY);
+        m_currentScreen = UI_SCREEN_STUDY;
+        m_studyAction->setChecked(true);
+        m_analyticsAction->setChecked(false);
+        m_libraryAction->setChecked(false);
+        updateWindowTitle();
+    }
+}
+
+void MainWindow::onViewAnalytics()
+{
+    if (m_app && m_app->ui) {
+        ui_request_screen(m_app->ui, UI_SCREEN_ANALYTICS);
+        m_currentScreen = UI_SCREEN_ANALYTICS;
+        m_studyAction->setChecked(false);
+        m_analyticsAction->setChecked(true);
+        m_libraryAction->setChecked(false);
+        updateWindowTitle();
+    }
+}
+
+void MainWindow::onViewLibrary()
+{
+    if (m_app && m_app->ui) {
+        ui_request_screen(m_app->ui, UI_SCREEN_LIBRARY);
+        m_currentScreen = UI_SCREEN_LIBRARY;
+        m_studyAction->setChecked(false);
+        m_analyticsAction->setChecked(false);
+        m_libraryAction->setChecked(true);
+        updateWindowTitle();
+    }
+}
+
+void MainWindow::updateWindowTitle()
+{
+    QString screenName;
+    switch (m_currentScreen) {
+        case UI_SCREEN_STUDY:
+            screenName = "Study";
+            break;
+        case UI_SCREEN_ANALYTICS:
+            screenName = "Analytics";
+            break;
+        case UI_SCREEN_LIBRARY:
+            screenName = "Library";
+            break;
+        default:
+            screenName = "";
+            break;
+    }
+    
+    if (!screenName.isEmpty()) {
+        setWindowTitle(QString("HyperRecall - %1").arg(screenName));
+    } else {
+        setWindowTitle("HyperRecall");
+    }
 }
 
 void MainWindow::processFrame()
@@ -146,7 +221,7 @@ void MainWindow::processFrame()
             );
         }
         
-        // Let UI process the frame (minimal stub for now)
+        // Let UI process the frame
         if (m_app->ui) {
             ui_process_frame(m_app->ui, &frame_info);
         }
