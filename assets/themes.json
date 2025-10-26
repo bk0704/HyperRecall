@@ -1,9 +1,60 @@
 {
   "themes": [
     {
-      "name": "Default",
-      "description": "TODO: Define default theme colors and typography settings.",
-      "colors": {}
+      "name": "Neon Dark",
+      "id": "neon-dark",
+      "description": "High contrast neon-on-slate palette tuned for dark rooms.",
+      "colors": {
+        "background": "#10131d",
+        "backgroundAlt": "#181b28",
+        "surface": "#1f2336",
+        "surfaceAlt": "#2c3249",
+        "text": "#f4f8ff",
+        "textMuted": "#9ca7c6",
+        "accent": "#00dcdc",
+        "accentAlt": "#ff63f7",
+        "border": "#3e4562",
+        "success": "#00c878",
+        "warning": "#ffb700",
+        "danger": "#ff5252",
+        "info": "#00a8ff",
+        "clozeGap": "#00dcdc40",
+        "clozeText": "#f4f8ff",
+        "codeBackground": "#161a28",
+        "codeText": "#dce0ee",
+        "analyticsPrimary": "#00dcdc",
+        "analyticsSecondary": "#ff63f7",
+        "toastBackground": "#1f2336f0",
+        "toastText": "#f4f8ff"
+      }
+    },
+    {
+      "name": "Solar Dawn",
+      "id": "solar-dawn",
+      "description": "Warm sunrise tones with soft contrasts for daytime study.",
+      "colors": {
+        "background": "#f5f1eb",
+        "backgroundAlt": "#efe6dd",
+        "surface": "#ffffff",
+        "surfaceAlt": "#ffe8d2",
+        "text": "#2d2435",
+        "textMuted": "#6d6076",
+        "accent": "#ff7b54",
+        "accentAlt": "#ffa45c",
+        "border": "#d8c9b8",
+        "success": "#2bb673",
+        "warning": "#f0a500",
+        "danger": "#f05d5e",
+        "info": "#3f8efc",
+        "clozeGap": "#ffb68b80",
+        "clozeText": "#2d2435",
+        "codeBackground": "#fff5ec",
+        "codeText": "#40354f",
+        "analyticsPrimary": "#ff7b54",
+        "analyticsSecondary": "#3f8efc",
+        "toastBackground": "#ffe0c280",
+        "toastText": "#2d2435"
+      }
     }
   ]
 }
