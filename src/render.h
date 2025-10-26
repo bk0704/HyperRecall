@@ -13,27 +13,7 @@ extern "C" {
 #include <stdbool.h>
 #include <stddef.h>
 
-#ifndef HYPERRECALL_UI_QT6
-#include <raylib.h>
-#else
-// Forward declare raylib types for Qt backend compatibility
-typedef struct Font {
-    int baseSize;
-    int glyphCount;
-    int glyphPadding;
-    void *texture;
-    void *recs;
-    void *glyphs;
-} Font;
-
-typedef struct Color {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-    unsigned char a;
-} Color;
-#endif
-
+#include "types.h"
 #include "theme.h"
 
 /** Describes the font set used when rendering complex text. */

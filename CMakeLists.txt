@@ -133,6 +133,7 @@ set(HYPERRECALL_CORE_SOURCES
 
 set(HYPERRECALL_CORE_HEADERS
     src/app.h
+    src/types.h
     src/theme.h
     src/db.h
     src/model.h
