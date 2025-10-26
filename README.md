@@ -2,6 +2,19 @@
 
 HyperRecall is a desktop spaced repetition study application built with C17, raylib 5.x, raygui, and SQLite3. This repository currently provides the scaffolding for the core systems, build configuration, and tooling required to implement the full study experience.
 
+## Quick Start
+
+1. Install the raylib, raygui, and SQLite3 development packages for your platform (see [Build Prerequisites](#build-prerequisites)).
+2. Generate a build directory with CMake:
+   ```bash
+   cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+   ```
+3. Compile and launch HyperRecall in a single step:
+   ```bash
+   cmake --build build --target run
+   ```
+4. Tweak runtime behaviour in `~/.config/hyperrecall/settings.ini` (created on first launch) to toggle analytics capture or adjust autosave cadence.
+
 ## Project Goals
 
 * Deliver a fast, focused study workflow using a modern native UI powered by raylib/raygui.
@@ -48,7 +61,7 @@ The build can be guided with these optional environment variables:
 
 ## Building HyperRecall
 
-These instructions assume raylib, raygui, and SQLite3 development packages are installed.
+These instructions assume raylib, raygui, and SQLite3 development packages are installed. The commands mirror the steps in the [Quick Start](#quick-start) section and can be adapted for alternate generators or installation layouts.
 
 ### Linux (Ubuntu/Debian example)
 
@@ -92,6 +105,15 @@ Run the provided scripts to install dependencies or review guidance:
 * `scripts/setup_env.sh` — Linux helper for package installation tips.
 * `scripts/setup_env.ps1` — Windows helper for Chocolatey/vcpkg guidance.
 
+## Running HyperRecall
+
+After a successful build the executable is located at `build/hyperrecall`. The default configuration is generated on first launch and stored alongside other workspace data inside the platform-specific configuration directory (for example `~/.config/hyperrecall/` on Linux). Key options include:
+
+* `analytics.enabled` — disables event capture and dashboard aggregation when set to `false`.
+* `workspace_autosave_minutes` — configures the cadence for timed backups and on-review autosave snapshots.
+
+Autosave events create JSON snapshots for each reviewed card under the configured autosave directory and schedule periodic `db_create_backup` runs. Both successes and failures surface as toast notifications in the UI to keep the learner informed.
+
 ## Continuous Integration
 
 The GitHub Actions workflow builds Debug and Release configurations on Ubuntu and Release on Windows using Ninja. To reproduce locally, run:
@@ -105,9 +127,25 @@ cmake --build build-release
 
 Ensure the required dependencies are installed before executing the commands above.
 
-## Future Tasks
+## Feature Checklist
+
+* [x] Study session loop with toast notifications for review feedback and system events.
+* [x] Analytics dashboards powered by aggregated review, streak, and retention metrics.
+* [x] Configurable autosave pipeline combining per-review snapshots with timed database backups.
+* [ ] Deck import/export workflows and advanced topic management tools.
+* [ ] Cloud synchronization and collaborative study features.
+
+## Roadmap
 
 * [ ] [Implement the spaced repetition engine](https://github.com/HyperRecall/roadmap/issues/1)
 * [ ] [Design the raygui-powered study UI](https://github.com/HyperRecall/roadmap/issues/2)
 * [ ] [Add analytics dashboards and export workflows](https://github.com/HyperRecall/roadmap/issues/3)
+
+## Screenshots
+
+Binary assets are not tracked in this repository to keep the project friendly for
+text-only contribution workflows. To capture your own analytics dashboard
+preview, build and run HyperRecall, open the analytics panel, and take a
+platform screenshot. We recommend storing any captures outside the repository
+or in external issue/PR attachments.
 
