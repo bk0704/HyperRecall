@@ -94,7 +94,11 @@ This document outlines the development status and next steps for HyperRecall.
 
 2. **Card Type Coverage**
    - 7 of 14 spec types implemented
-   - Missing: Typing, CodeOutput, DebugFix, Explain, Compare, PracticalTask, AudioPrompt, Ordering, Matching, LabelDiagram
+   - **Priority Categorization**:
+     - ✅ **Essential (MVP)**: ShortAnswer, Cloze, MultipleChoice - Already Done
+     - ⚠️ **Important**: Typing (with regex), Ordering, Matching - 2-3 days
+     - ⏳ **Nice to Have**: CodeOutput, DebugFix, Compare - 1-2 days
+     - 🚀 **Future**: Explain, PracticalTask, LabelDiagram, AudioPrompt - 3-5 days
 
 3. **Runtime Verification**
    - Code compiles and builds
@@ -148,10 +152,24 @@ This document outlines the development status and next steps for HyperRecall.
 
 4. **Runtime Verification** (1 day)
    - Test on Linux with X11
-   - Verify UI renders correctly
-   - Test basic workflows
-   - Capture screenshots
-   - Document any issues
+   - **Verification Checklist**:
+     - [ ] Application launches without crashes
+     - [ ] Theme loads correctly (Neon Dark default)
+     - [ ] Card list displays and scrolls smoothly
+     - [ ] Create new card (ShortAnswer, Cloze, MultipleChoice)
+     - [ ] Edit existing card
+     - [ ] Delete card with confirmation
+     - [ ] Start Mastery session and complete 5 reviews
+     - [ ] Start Cram session and complete 5 reviews
+     - [ ] Open Analytics view and verify charts render
+     - [ ] Open command palette (Ctrl+P)
+     - [ ] Search for cards with debouncing
+     - [ ] Apply filters and verify results
+     - [ ] Toast notifications appear and dismiss
+     - [ ] Error modal displays on simulated error
+     - [ ] Window resizes and geometry persists
+     - [ ] FPS counter shows 60 FPS
+     - [ ] Take screenshots for documentation
 
 ### Medium Priority (Nice to Have)
 
@@ -168,11 +186,10 @@ This document outlines the development status and next steps for HyperRecall.
    - Optimize bottlenecks
 
 7. **Additional Card Types** (3-5 days)
-   - Implement Typing with regex validation
-   - Implement CodeOutput
-   - Implement Ordering
-   - Implement Matching
-   - Test each type
+   - **Priority 1 (Important)**: Typing with regex validation, Ordering, Matching
+   - **Priority 2 (Nice to Have)**: CodeOutput, DebugFix, Compare
+   - **Priority 3 (Future)**: Explain, PracticalTask, LabelDiagram, AudioPrompt
+   - Test each type with validation
 
 8. **Integration Tests** (2-3 days)
    - Create automated test suite

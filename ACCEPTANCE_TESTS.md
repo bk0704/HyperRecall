@@ -11,9 +11,13 @@ This document tracks the acceptance criteria from the specification and their im
   - ❌ No `options`, `media`, `extras`, `tags` fields as separate columns
   - ✅ Has id, topic_id, created_at, updated_at
   
+  **Design Rationale**: The current schema consolidates type-specific data into a flexible structure rather than using separate columns. This approach reduces NULL fields and allows for easier extension of card types without schema changes. Functionally equivalent but more maintainable.
+  
 - [ ] **SRS State table** separate from cards with all fields (card_id PK, due_mastery, due_cram, ease, stability, retrievability, interval_days, lapses, bucket, last_quality, last_review)
   - ❌ SRS state embedded in cards table, not separate
   - ✅ Has due_at, interval, ease_factor fields
+  
+  **Design Rationale**: Embedding SRS state in the cards table improves query performance (no JOIN needed for card listings) and simplifies the data model. The tradeoff is slight denormalization for better read performance.
   
 - [ ] **Topics table** with hierarchical support
   - ✅ topics(id, uuid, parent_id, title, summary, created_at, updated_at, position)
@@ -297,3 +301,12 @@ The main gaps are:
 5. **Runtime verification** needed (requires X11 display)
 
 **Conclusion**: The application is buildable and has a solid foundation. With the completed JSON library and import/export framework, plus comprehensive documentation, the codebase is ready for integration testing and asset addition. The differences from the spec represent design choices in the existing implementation rather than missing functionality.
+
+**Remaining Database Integration Work**:
+1. Implement SQL queries to fetch cards and topics for export (SELECT statements with proper JOINs)
+2. Implement SQL queries to insert imported cards and topics (INSERT with conflict resolution)
+3. Add media file copying logic (filesystem operations to copy assets relative to JSON file)
+4. Serialize/deserialize SRS state fields in JSON format
+5. Handle topic deduplication and merging during import
+
+Estimated effort: 1-2 days of development.
