@@ -243,6 +243,7 @@ Ensure you have:
 - **Developer Tools**: `-DHYPERRECALL_ENABLE_DEVTOOLS=ON` (default: ON)
 - **System raygui**: `-DHYPERRECALL_USE_SYSTEM_RAYGUI=ON` (default: OFF)
 - **Build Type**: `-DCMAKE_BUILD_TYPE=Debug|Release` (default: Release)
+- **UI Backend**: `-DHYPERRECALL_UI_BACKEND=RAYLIB|QT6` (default: RAYLIB)
 - **raylib Path**: `-DRAYLIB_ROOT=/path/to/raylib`
 - **SQLite Path**: `-DSQLITE3_ROOT=/path/to/sqlite3`
 
@@ -253,6 +254,82 @@ cmake -S . -B build -G Ninja \
       -DHYPERRECALL_ENABLE_DEVTOOLS=ON \
       -DRAYLIB_ROOT=/usr/local
 ```
+
+### Building with Qt6 UI Backend
+
+HyperRecall supports two UI backends: the default Raylib backend and an alternative Qt6 backend. The Qt6 backend provides a more native desktop experience using Qt Widgets.
+
+#### Prerequisites for Qt6 Backend
+
+In addition to the base requirements, you need:
+- **Qt6 6.x** (Widgets, Gui, Core components)
+- **C++17-compatible compiler**
+
+#### Installing Qt6 Dependencies
+
+**Ubuntu/Debian**:
+```bash
+sudo apt install -y cmake ninja-build build-essential \
+                    qt6-base-dev libsqlite3-dev
+```
+
+**openSUSE**:
+```bash
+sudo zypper install -y cmake ninja gcc gcc-c++ pkg-config \
+                       qt6-base-devel sqlite3-devel
+```
+
+**Fedora**:
+```bash
+sudo dnf install -y cmake ninja-build gcc-c++ \
+                    qt6-qtbase-devel sqlite-devel
+```
+
+**Arch Linux**:
+```bash
+sudo pacman -S cmake ninja gcc qt6-base sqlite
+```
+
+**macOS (via Homebrew)**:
+```bash
+brew install cmake ninja qt@6 sqlite3
+```
+
+**Windows (via vcpkg)**:
+```powershell
+vcpkg install qtbase:x64-windows sqlite3:x64-windows
+```
+
+#### Building with Qt6
+
+**Linux/macOS**:
+```bash
+cmake -S . -B build-qt -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DHYPERRECALL_UI_BACKEND=QT6
+cmake --build build-qt
+./build-qt/bin/hyperrecall
+```
+
+**Windows (with vcpkg)**:
+```powershell
+cmake -S . -B build-qt -G "Visual Studio 17 2022" -A x64 `
+      -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+      -DHYPERRECALL_UI_BACKEND=QT6 `
+      -DCMAKE_BUILD_TYPE=Release
+cmake --build build-qt --config Release
+.\build-qt\bin\Release\hyperrecall.exe
+```
+
+#### Qt6 Backend Features
+
+The Qt6 backend provides:
+- Native desktop window with standard menus (File, Help)
+- Better integration with desktop environments
+- More familiar UI toolkit for Qt developers
+- Placeholder UI with core functionality initialized
+
+**Note**: The Qt6 backend is currently in early development. Full feature parity with the Raylib backend is planned for future releases.
 
 ---
 
