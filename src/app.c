@@ -11,20 +11,13 @@
 #include "cfg.h"
 #include "db.h"
 #include "platform.h"
+#include "sessions.h"
+#include "theme.h"
+#include "ui.h"
 
 struct SrsHandle {
     double time_accumulator;
     uint64_t updates_processed;
-};
-
-struct SessionManager {
-    double elapsed_time;
-    uint64_t frames_processed;
-};
-
-struct UiContext {
-    uint64_t frames_rendered;
-    double elapsed_time;
 };
 
 struct AnalyticsHandle {
@@ -53,58 +46,6 @@ static bool srs_update(struct SrsHandle *srs, const HrPlatformFrame *frame)
 static void srs_shutdown(struct SrsHandle *srs)
 {
     free(srs);
-}
-
-static struct SessionManager *sessions_create(void)
-{
-    return calloc(1U, sizeof(struct SessionManager));
-}
-
-static bool sessions_update(struct SessionManager *sessions, const HrPlatformFrame *frame)
-{
-    if (sessions == NULL || frame == NULL) {
-        return false;
-    }
-
-    sessions->elapsed_time += frame->delta_time;
-    sessions->frames_processed++;
-    return true;
-}
-
-static void sessions_destroy(struct SessionManager *sessions)
-{
-    free(sessions);
-}
-
-static struct UiContext *ui_create(void)
-{
-    return calloc(1U, sizeof(struct UiContext));
-}
-
-static bool ui_render(struct UiContext *ui, const HrPlatformFrame *frame)
-{
-    if (ui == NULL || frame == NULL) {
-        return false;
-    }
-
-    ui->frames_rendered++;
-    ui->elapsed_time += frame->delta_time;
-
-    const int fps_x = frame->render_width > 120 ? frame->render_width - 120 : 0;
-    DrawFPS(fps_x, 16);
-    DrawText("HyperRecall scaffolding build", 24, 24, 28, DARKGRAY);
-
-    char buffer[128];
-    snprintf(buffer, sizeof(buffer), "Frame %llu  |  %.2f ms",
-        (unsigned long long)frame->index, frame->delta_time * 1000.0);
-    DrawText(buffer, 24, 64, 20, GRAY);
-
-    return true;
-}
-
-static void ui_destroy(struct UiContext *ui)
-{
-    free(ui);
 }
 
 static struct AnalyticsHandle *analytics_create(void)
@@ -146,6 +87,19 @@ static void analytics_shutdown(struct AnalyticsHandle *analytics)
     free(analytics);
 }
 
+static void theme_usage_callback(const HrThemePalette *palette, void *user_data)
+{
+    AppContext *app = (AppContext *)user_data;
+    if (app == NULL || palette == NULL || app->config == NULL) {
+        return;
+    }
+
+    HrConfig *config = cfg_data_mutable(app->config);
+    if (config != NULL) {
+        snprintf(config->ui.theme_palette, sizeof(config->ui.theme_palette), "%s", palette->id);
+    }
+}
+
 AppContext *app_create(void)
 {
     AppContext *app = calloc(1U, sizeof(*app));
@@ -177,17 +131,51 @@ AppContext *app_create(void)
         return NULL;
     }
 
-    app->sessions = sessions_create();
+    app->sessions = session_manager_create();
     if (app->sessions == NULL) {
         app_destroy(app);
         return NULL;
     }
 
-    app->ui = ui_create();
+    app->themes = theme_manager_create();
+    if (app->themes == NULL) {
+        app_destroy(app);
+        return NULL;
+    }
+
+    const HrConfig *config_data = cfg_data(app->config);
+    if (config_data != NULL) {
+        char theme_prefs_path[PATH_MAX];
+        snprintf(theme_prefs_path, sizeof(theme_prefs_path), "%s/theme_palette.json",
+                 config_data->paths.config_dir);
+        theme_manager_set_preferences_file(app->themes, theme_prefs_path);
+        theme_manager_set_user_directory(app->themes, config_data->paths.config_dir);
+    }
+
+    theme_manager_load_palettes(app->themes, "assets/themes.json");
+    if (config_data != NULL && config_data->ui.theme_palette[0] != '\0') {
+        theme_manager_apply(app->themes, config_data->ui.theme_palette);
+    }
+    theme_manager_set_analytics_callback(app->themes, theme_usage_callback, app);
+
+    UiConfig ui_config = {
+        .enable_devtools = false,
+    };
+    app->ui = ui_create(&ui_config);
     if (app->ui == NULL) {
         app_destroy(app);
         return NULL;
     }
+
+    ui_attach_theme_manager(app->ui, app->themes);
+    ui_attach_session_manager(app->ui, app->sessions, NULL);
+    ui_attach_database(app->ui, app->database);
+
+    float base_font_size = 20.0f;
+    if (config_data != NULL && config_data->ui.font_size_pt > 0U) {
+        base_font_size = (float)config_data->ui.font_size_pt;
+    }
+    ui_set_fonts(app->ui, NULL, base_font_size);
 
     app->analytics = analytics_create();
     if (app->analytics == NULL) {
@@ -219,11 +207,8 @@ int app_run(AppContext *app)
         if (!srs_update(app->srs, &frame_info)) {
             result = 2;
             frame_ok = false;
-        } else if (!sessions_update(app->sessions, &frame_info)) {
+        } else if (!ui_process_frame(app->ui, &frame_info)) {
             result = 3;
-            frame_ok = false;
-        } else if (!ui_render(app->ui, &frame_info)) {
-            result = 4;
             frame_ok = false;
         }
 
@@ -254,8 +239,14 @@ void app_destroy(AppContext *app)
     ui_destroy(app->ui);
     app->ui = NULL;
 
-    sessions_destroy(app->sessions);
+    session_manager_destroy(app->sessions);
     app->sessions = NULL;
+
+    if (app->themes != NULL) {
+        theme_manager_write_preferences(app->themes);
+        theme_manager_destroy(app->themes);
+        app->themes = NULL;
+    }
 
     srs_shutdown(app->srs);
     app->srs = NULL;
