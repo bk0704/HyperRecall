@@ -252,6 +252,13 @@ HyperRecall is designed for smooth performance:
 
 MIT License. See `LICENSE` file for details.
 
+## Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Get started in seconds with one-click run
+- **[USAGE.md](USAGE.md)** - Comprehensive guide to building, running, and developing
+- **[ROADMAP.md](ROADMAP.md)** - Development status and future plans
+- **[ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md)** - Testing status and acceptance criteria
+
 ## Contributing
 
 Contributions are welcome! Please:
@@ -260,6 +267,13 @@ Contributions are welcome! Please:
 2. Create a feature branch
 3. Make your changes with tests
 4. Submit a pull request
+
+### Development Tools
+
+- `./check-setup.sh` - Verify your development environment
+- `./dev.sh` - Build in debug mode with developer tools
+- `source aliases.sh` - Load convenient shell shortcuts
+- `make help` - See all available Make targets
 
 ## Roadmap
 
