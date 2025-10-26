@@ -14,7 +14,17 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+#ifndef HYPERRECALL_UI_QT6
 #include <raylib.h>
+#else
+// Define Color type for Qt backend compatibility
+typedef struct Color {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
+} Color;
+#endif
 
 #include "db.h"
 #include "platform.h"
