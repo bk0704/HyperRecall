@@ -231,16 +231,16 @@ Required hotkeys: ↑/↓, Enter, A, /, F, Del, E, Ctrl+F, Ctrl+S, Ctrl+P, Esc
 
 ## Assets
 
-- ❌ **Inter font** (Regular, SemiBold)
-  - Documented but not included
-- ❌ **JetBrains Mono** (Regular)
-  - Documented but not included
+- ✅ **Inter font** (Regular, SemiBold)
+  - 803 KB total, OFL licensed
+- ✅ **JetBrains Mono** (Regular)
+  - 268 KB, OFL licensed
 - ✅ **OFL license** for fonts
-- ❌ **Icon PNGs** (success, error, info, actions)
-  - Documented but not included
+- ✅ **Icon PNGs** (success, error, info, actions)
+  - 18 icons at 24x24 with transparency
 - ✅ **themes.json** with Modern Dark + variants
 
-**Status**: ⚠️ Partial - Documentation complete, files missing
+**Status**: ✅ Complete
 
 ---
 
@@ -269,19 +269,18 @@ Required hotkeys: ↑/↓, Enter, A, /, F, Del, E, Ctrl+F, Ctrl+S, Ctrl+P, Esc
 - Build system
 - License (MIT)
 - Core data models
+- Import/Export with database integration
+- Assets (fonts and icons)
 
 ### Partially Complete ⚠️
 - Database schema (different structure than spec)
 - Card types (7 of 14)
 - UI implementation (code present, visual verification needed)
-- Import/export (framework done, DB integration needed)
 - SRS algorithm (code present, algorithm verification needed)
 - Platform support (Linux verified, Windows untested)
-- Assets (documented, files missing)
 
 ### Not Started ❌
 - Additional card types (Typing, CodeOutput, etc.)
-- Actual font/icon files
 - Runtime testing and verification
 - Performance benchmarking
 - Windows binary build
@@ -297,14 +296,15 @@ The repository contains a **substantial, well-architected implementation** (~10k
 - Session management
 - Error handling
 - Import/Export with database integration
+- Font assets (Inter, JetBrains Mono)
+- Icon assets (18 PNG icons)
 
 The main gaps are:
 1. **Schema differences** from spec (but current schema is functional)
 2. **Missing card types** (7 of 14 implemented)
-3. **Asset files** (fonts/icons documented but not included)
-4. **Runtime verification** needed (requires X11 display)
+3. **Runtime verification** needed (requires X11 display)
 
-**Conclusion**: The application is buildable and has a solid foundation. With the completed JSON library, import/export implementation, and comprehensive documentation, the codebase is ready for runtime testing and asset addition. The differences from the spec represent design choices in the existing implementation rather than missing functionality.
+**Conclusion**: The application is buildable and has a solid foundation. With the completed JSON library, import/export implementation, and asset files, the codebase is ready for runtime testing. The differences from the spec represent design choices in the existing implementation rather than missing functionality.
 
 **Import/Export Implementation Status**:
 - ✅ JSON serialization and deserialization
@@ -314,4 +314,9 @@ The main gaps are:
 - ✅ CSV export/import for basic fields
 - ⚠️ Media file copying (placeholder for future enhancement)
 
-Estimated remaining effort: 2-3 days for asset addition and runtime verification.
+**Asset Status**:
+- ✅ Inter font (Regular 398KB, SemiBold 405KB)
+- ✅ JetBrains Mono font (Regular 268KB)
+- ✅ 18 PNG icons (24x24, status/action/session)
+
+Estimated remaining effort: 3 days for runtime verification, bug fixes, and Windows testing.

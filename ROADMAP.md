@@ -101,14 +101,9 @@ This document outlines the development status and next steps for HyperRecall.
 
 ### ❌ Not Yet Implemented
 
-1. **Asset Files**
-   - Font files (Inter, JetBrains Mono)
-   - Icon PNG files
-   - Documentation is complete
+1. **Additional Card Types** (see above)
 
-2. **Additional Card Types** (see above)
-
-3. **Performance Testing**
+2. **Performance Testing**
    - 60 FPS verification
    - 10k+ card load testing
    - Memory profiling
@@ -124,19 +119,7 @@ This document outlines the development status and next steps for HyperRecall.
 
 ### High Priority (Critical for MVP)
 
-1. **Add Font Assets** (1 hour)
-   - Download Inter (Regular, SemiBold)
-   - Download JetBrains Mono (Regular)
-   - Add to assets/fonts/
-   - Verify OFL license compliance
-
-2. **Add Icon Assets** (2-4 hours)
-   - Create or download icon set
-   - 16x16 or 24x24 PNG format
-   - Status, action, and session icons
-   - Test with UI
-
-3. **Runtime Verification** (1 day)
+1. **Runtime Verification** (1 day)
    - Test on Linux with X11
    - **Verification Checklist**:
      - [ ] Application launches without crashes
@@ -209,12 +192,12 @@ Assuming focused development:
 | Component | Estimate | Status |
 |-----------|----------|--------|
 | Import/Export DB Integration | 2 days | ✅ Complete |
-| Font Assets | 1 hour | ❌ Not Started |
-| Icon Assets | 4 hours | ❌ Not Started |
+| Font Assets | 1 hour | ✅ Complete |
+| Icon Assets | 4 hours | ✅ Complete |
 | Runtime Verification | 1 day | ❌ Not Started |
 | Windows Build Test | 1 day | ❌ Not Started |
 | Bug Fixes | 1 day | ❌ Not Started |
-| **Total** | **~4 days remaining** | |
+| **Total** | **~3 days remaining** | |
 
 ---
 
