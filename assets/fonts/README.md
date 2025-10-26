@@ -30,4 +30,4 @@ HyperRecall uses the following fonts, both licensed under the SIL Open Font Lice
 
 ## Current Status
 
-⚠️ **Font files not yet included in repository** - The application will fall back to raylib's default font if these files are missing. For full visual fidelity, please add the font files as described above.
+✅ **Font files included in repository** - All required font files have been added. The application will use these fonts for the intended visual appearance.

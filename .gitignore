@@ -16,3 +16,7 @@ compile_commands.json
 *.log
 _codeql_build_dir/
 _codeql_detected_source_root
+*.o
+*.a
+*.so
+*.dylib
