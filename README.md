@@ -1,151 +1,240 @@
 # HyperRecall
 
-HyperRecall is a desktop spaced repetition study application built with C17, raylib 5.x, raygui, and SQLite3. This repository currently provides the scaffolding for the core systems, build configuration, and tooling required to implement the full study experience.
+HyperRecall is a desktop spaced repetition study application built with C17, raylib 5.x, raygui, and SQLite3. It provides a fast, focused study workflow with deep analytics and a modern native UI.
+
+## Features
+
+* **Spaced Repetition**: Hybrid "HyperSRS" algorithm combining stability-based mastery and Leitner-style cram modes
+* **Rich Card Types**: Short answer, cloze deletion, multiple choice, true/false, image occlusion, audio recall
+* **Flexible Study Sessions**: Mastery, cram, custom drill, and exam simulation modes
+* **Topic Organization**: Hierarchical topic tree for organizing study materials
+* **Analytics Dashboard**: Track progress with heatmaps, trends, and performance metrics
+* **Import/Export**: JSON and CSV formats for deck sharing and backup
+* **Themeable UI**: Modern Dark theme with customizable palettes (Neon Dark, Solar Dawn)
+* **Cross-Platform**: Builds on Linux and Windows (MinGW)
 
 ## Quick Start
 
-1. Install the raylib, raygui, and SQLite3 development packages for your platform (see [Build Prerequisites](#build-prerequisites)).
-2. Generate a build directory with CMake:
-   ```bash
-   cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
-   ```
-3. Compile and launch HyperRecall in a single step:
-   ```bash
-   cmake --build build --target run
-   ```
-4. Tweak runtime behaviour in `~/.config/hyperrecall/settings.ini` (created on first launch) to toggle analytics capture or adjust autosave cadence.
+### Prerequisites
 
-## Project Goals
+HyperRecall requires the following dependencies:
 
-* Deliver a fast, focused study workflow using a modern native UI powered by raylib/raygui.
-* Synchronize decks, media, and review history through a reliable SQLite-backed data model.
-* Provide deep analytics and developer tooling to iterate on the learning experience.
+* **raylib 5.x** — Graphics, input, and audio runtime
+* **SQLite3** — Database for persistent storage
+* **CMake 3.21+** — Build system
+* **Ninja or Make** — Build tool
+* **C17 compiler** — GCC, Clang, or MSVC
 
-## Directory Layout
-
-```
-/ (repository root)
-├── assets/            # Runtime assets such as fonts, icons, and theme definitions
-├── external/          # Third-party libraries bundled with the project (raygui placeholder)
-├── scripts/           # Environment setup helpers for Linux and Windows
-├── src/               # Application source code organized by subsystem
-├── .github/workflows/ # Continuous integration configuration
-├── CMakeLists.txt     # Primary CMake build script
-├── LICENSE            # MIT license
-└── README.md          # Project documentation
-```
-
-Each source module contains TODO notes describing its future responsibilities to guide development.
-
-## Build Prerequisites
-
-HyperRecall depends on the following libraries:
-
-* **raylib 5.x** — graphics, input, and audio runtime.
-* **raygui** — immediate-mode GUI toolkit (single-header integration supported).
-* **SQLite3** — persistent storage for decks, sessions, and analytics.
-
-### Environment Variables
-
-The build can be guided with these optional environment variables:
-
-* `RAYLIB_ROOT` — points to the installation prefix for raylib.
-* `RAYGUI_ROOT` — points to the installation prefix containing `raygui.h` when using a system copy.
-* `SQLITE3_ROOT` — points to a custom SQLite3 installation.
-* `HYPERRECALL_RAYGUI_HEADER` — overrides the bundled raygui single-header path when `HYPERRECALL_USE_SYSTEM_RAYGUI=OFF`.
-
-### CMake Options
-
-* `HYPERRECALL_ENABLE_DEVTOOLS` (default: `ON`) — toggles developer-only instrumentation and overlays.
-* `HYPERRECALL_USE_SYSTEM_RAYGUI` (default: `OFF`) — uses a system-provided `raygui.h` when enabled; otherwise the project expects a bundled header at `external/raygui/raygui.h`.
-
-## Building HyperRecall
-
-These instructions assume raylib, raygui, and SQLite3 development packages are installed. The commands mirror the steps in the [Quick Start](#quick-start) section and can be adapted for alternate generators or installation layouts.
-
-### Linux (Ubuntu/Debian example)
+### Linux Build Instructions
 
 ```bash
+# Install dependencies (Ubuntu/Debian)
 sudo apt update
-sudo apt install -y build-essential cmake ninja-build pkg-config libraylib-dev libsqlite3-dev
-# The repository bundles external/raygui/raygui.h. Set -DHYPERRECALL_USE_SYSTEM_RAYGUI=ON to rely on
-# a system-provided header when available.
+sudo apt install -y build-essential cmake ninja-build pkg-config libsqlite3-dev
+sudo apt install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
+
+# Build and install raylib 5.0 (if not available via package manager)
+git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /tmp/raylib
+cd /tmp/raylib
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --build build
+sudo cmake --install build
+
+# Build HyperRecall
+cd /path/to/HyperRecall
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
-cmake --build build --target run
+
+# Run
+./build/bin/hyperrecall
 ```
 
-For Release builds with link-time optimization (LTO):
-
-```bash
-cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build-release
-```
-
-### Windows (PowerShell with vcpkg)
+### Windows Build Instructions
 
 ```powershell
-# Optional: install Ninja if not already available
+# Install Ninja (optional)
 choco install ninja -y
-# Install raylib 5.x and sqlite3 via vcpkg or your preferred package manager. Enable
-# -DHYPERRECALL_USE_SYSTEM_RAYGUI=ON when raygui is provided by the toolchain; otherwise the bundled
-# header at external/raygui/raygui.h will be used.
+
+# Use vcpkg to install dependencies
+git clone https://github.com/microsoft/vcpkg.git
+.\vcpkg\bootstrap-vcpkg.bat
+.\vcpkg\vcpkg install raylib sqlite3 --triplet x64-windows
+
+# Build HyperRecall
 cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Debug `
-      -DCMAKE_TOOLCHAIN_FILE=$Env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake
+      -DCMAKE_TOOLCHAIN_FILE=.\vcpkg\scripts\buildsystems\vcpkg.cmake
 cmake --build build
-cmake --build build --target run
+
+# Run
+.\build\bin\hyperrecall.exe
 ```
 
-> **Note:** On MinGW environments, ensure `RAYLIB_ROOT` and `SQLITE3_ROOT` point to directories containing `include/` and `lib/` folders with the appropriate binaries (`raylib`, `opengl32`, `gdi32`, `winmm`, and `sqlite3`). Pass `-DHYPERRECALL_USE_SYSTEM_RAYGUI=ON` when raygui ships with your toolchain; otherwise the bundled header at `external/raygui/raygui.h` is used automatically. Toggle the developer overlay on any platform with `-DHYPERRECALL_ENABLE_DEVTOOLS=OFF` when preparing production builds.
+## Project Structure
 
-### Developer Tooling
+```
+HyperRecall/
+├── assets/              # Runtime assets
+│   ├── fonts/          # UI and code fonts (Inter, JetBrains Mono)
+│   ├── icons/          # PNG icons for UI elements
+│   └── themes.json     # Theme palette definitions
+├── external/           # Vendored dependencies
+│   └── raygui/         # raygui single-header library
+├── src/                # Application source code
+│   ├── app.*           # Application lifecycle and main loop
+│   ├── db.*            # SQLite database layer
+│   ├── model.*         # Domain models (cards, topics)
+│   ├── srs.*           # Spaced repetition scheduling
+│   ├── sessions.*      # Study session management
+│   ├── ui.*            # Main UI rendering and interaction
+│   ├── theme.*         # Theme palette management
+│   ├── render.*        # Rich text and media rendering
+│   ├── media.*         # Media asset handling
+│   ├── platform.*      # Platform-specific utilities
+│   ├── cfg.*           # Configuration management
+│   ├── analytics.*     # Analytics tracking and export
+│   ├── import_export.* # JSON/CSV import/export
+│   ├── json.*          # Minimal JSON parser/serializer
+│   └── main.c          # Entry point
+├── CMakeLists.txt      # Build configuration
+├── LICENSE             # MIT License
+└── README.md           # This file
+```
 
-Run the provided scripts to install dependencies or review guidance:
+## Configuration
 
-* `scripts/setup_env.sh` — Linux helper for package installation tips.
-* `scripts/setup_env.ps1` — Windows helper for Chocolatey/vcpkg guidance.
+On first launch, HyperRecall creates a configuration directory:
+- Linux: `~/.local/share/HyperRecall/`
+- Windows: `%APPDATA%\HyperRecall\`
 
-## Running HyperRecall
+Configuration is stored in `settings.db` (SQLite) and includes:
+- Theme preferences
+- Window geometry
+- Font size
+- Autosave settings
+- Study session defaults
 
-After a successful build the executable is located at `build/hyperrecall`. The default configuration is generated on first launch and stored alongside other workspace data inside the platform-specific configuration directory (for example `~/.config/hyperrecall/` on Linux). Key options include:
+## Database Schema
 
-* `analytics.enabled` — disables event capture and dashboard aggregation when set to `false`.
-* `workspace_autosave_minutes` — configures the cadence for timed backups and on-review autosave snapshots.
+HyperRecall uses SQLite with WAL mode for reliable concurrent access:
 
-Autosave events create JSON snapshots for each reviewed card under the configured autosave directory and schedule periodic `db_create_backup` runs. Both successes and failures surface as toast notifications in the UI to keep the learner informed.
+* **topics** - Hierarchical topic tree
+* **cards** - Study cards with prompts and responses
+* **reviews** - Historical review records with timing and ratings
+* Indexes optimized for common queries (due cards, topic filters)
 
-## Continuous Integration
+Migrations are idempotent and run automatically on startup.
 
-The GitHub Actions workflow builds Debug and Release configurations on Ubuntu and Release on Windows using Ninja. To reproduce locally, run:
+## Assets
+
+### Fonts
+
+The application uses two font families (not included in repository):
+
+* **Inter** (Regular, SemiBold) - UI text and labels
+* **JetBrains Mono** (Regular) - Code blocks and technical text
+
+See `assets/fonts/README.md` for download links and installation instructions.
+
+### Icons
+
+The application uses PNG icons for UI elements (not included in repository):
+
+* Status icons (success, error, info, warning)
+* Action icons (add, edit, delete, search, filter, export, import, settings, analytics, study)
+* Study session icons (mastery, cram, exam, custom)
+
+See `assets/icons/README.md` for design guidelines and required icons.
+
+The application gracefully handles missing fonts and icons by falling back to defaults.
+
+## Development
+
+### Build Options
+
+* `HYPERRECALL_ENABLE_DEVTOOLS` (default: ON) - Enable developer overlays and diagnostics
+* `HYPERRECALL_USE_SYSTEM_RAYGUI` (default: OFF) - Use system-provided raygui instead of bundled version
+
+### Code Style
+
+The project uses `.clang-format` for consistent code formatting:
 
 ```bash
-cmake -S . -B build-debug -G Ninja -DCMAKE_BUILD_TYPE=Debug
-cmake --build build-debug
-cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build-release
+clang-format -i src/*.c src/*.h
 ```
 
-Ensure the required dependencies are installed before executing the commands above.
+### Running Tests
 
-## Feature Checklist
+```bash
+# Build with tests enabled
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
 
-* [x] Study session loop with toast notifications for review feedback and system events.
-* [x] Analytics dashboards powered by aggregated review, streak, and retention metrics.
-* [x] Configurable autosave pipeline combining per-review snapshots with timed database backups.
-* [ ] Deck import/export workflows and advanced topic management tools.
-* [ ] Cloud synchronization and collaborative study features.
+# Run specific test
+gcc -I./src -std=c17 -Wall -Wextra test_json.c src/json.c -o test_json && ./test_json
+```
+
+## Import/Export
+
+### JSON Format
+
+```json
+{
+  "metadata": {
+    "version": "1.0",
+    "exported_at": 1234567890
+  },
+  "topics": [
+    {"id": 1, "title": "Mathematics", "parent_id": null}
+  ],
+  "cards": [
+    {
+      "id": 1,
+      "topic_id": 1,
+      "prompt": "What is 2+2?",
+      "response": "4",
+      "type": "ShortAnswer"
+    }
+  ]
+}
+```
+
+### CSV Format
+
+Simple format with basic fields (id, topic, prompt, response, mnemonic, created_at, due_at).
+
+## Performance
+
+HyperRecall is designed for smooth performance:
+
+* Target: 60 FPS at all times
+* Efficient handling of 10,000+ cards
+* Virtualized lists for large datasets
+* Debounced search and filtering
+* Batched database writes for reviews
+
+## License
+
+MIT License. See `LICENSE` file for details.
+
+## Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with tests
+4. Submit a pull request
 
 ## Roadmap
 
-* [ ] [Implement the spaced repetition engine](https://github.com/HyperRecall/roadmap/issues/1)
-* [ ] [Design the raygui-powered study UI](https://github.com/HyperRecall/roadmap/issues/2)
-* [ ] [Add analytics dashboards and export workflows](https://github.com/HyperRecall/roadmap/issues/3)
+* [ ] Additional card types (code output, practical tasks, matching, ordering)
+* [ ] Media embedding (images, audio, video)
+* [ ] Advanced analytics (forgetting curves, retention predictions)
+* [ ] Cloud sync and collaborative study
+* [ ] Mobile companion app
+* [ ] Plugin system for custom card types
 
-## Screenshots
+## Support
 
-Binary assets are not tracked in this repository to keep the project friendly for
-text-only contribution workflows. To capture your own analytics dashboard
-preview, build and run HyperRecall, open the analytics panel, and take a
-platform screenshot. We recommend storing any captures outside the repository
-or in external issue/PR attachments.
+For issues, questions, or feature requests, please open an issue on GitHub.
 
