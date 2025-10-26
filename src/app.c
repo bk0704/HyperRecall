@@ -3,18 +3,13 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-struct ConfigHandle {
-    bool loaded;
-};
+#include "cfg.h"
+#include "db.h"
 
 struct PlatformHandle {
     bool initialized;
     unsigned int frame_budget;
     unsigned int frame_counter;
-};
-
-struct DatabaseHandle {
-    bool connected;
 };
 
 struct SrsHandle {
@@ -33,20 +28,6 @@ struct AnalyticsHandle {
     bool enabled;
     unsigned int frames_tracked;
 };
-
-static struct ConfigHandle *config_load(void)
-{
-    struct ConfigHandle *handle = malloc(sizeof(*handle));
-    if (handle != NULL) {
-        handle->loaded = true;
-    }
-    return handle;
-}
-
-static void config_unload(struct ConfigHandle *handle)
-{
-    free(handle);
-}
 
 static struct PlatformHandle *platform_bootstrap(void)
 {
@@ -85,23 +66,6 @@ static void platform_shutdown(struct PlatformHandle *platform)
     if (platform != NULL) {
         platform->initialized = false;
         free(platform);
-    }
-}
-
-static struct DatabaseHandle *database_connect(void)
-{
-    struct DatabaseHandle *database = malloc(sizeof(*database));
-    if (database != NULL) {
-        database->connected = true;
-    }
-    return database;
-}
-
-static void database_disconnect(struct DatabaseHandle *database)
-{
-    if (database != NULL) {
-        database->connected = false;
-        free(database);
     }
 }
 
@@ -216,7 +180,7 @@ AppContext *app_create(void)
         return NULL;
     }
 
-    app->config = config_load();
+    app->config = cfg_load(NULL);
     if (app->config == NULL) {
         app_destroy(app);
         return NULL;
@@ -228,7 +192,7 @@ AppContext *app_create(void)
         return NULL;
     }
 
-    app->database = database_connect();
+    app->database = db_open(app->config);
     if (app->database == NULL) {
         app_destroy(app);
         return NULL;
@@ -314,13 +278,13 @@ void app_destroy(AppContext *app)
     srs_shutdown(app->srs);
     app->srs = NULL;
 
-    database_disconnect(app->database);
+    db_close(app->database);
     app->database = NULL;
 
     platform_shutdown(app->platform);
     app->platform = NULL;
 
-    config_unload(app->config);
+    cfg_unload(app->config);
     app->config = NULL;
 
     free(app);
