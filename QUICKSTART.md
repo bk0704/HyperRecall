@@ -89,9 +89,23 @@ After installation, you can launch HyperRecall from:
 ### Quick Commands
 - `./run.sh` or `make run` - Build and run (Linux/macOS)
 - `run.bat` or `run.ps1` - Build and run (Windows)
+- `./dev.sh` - Development build with debug symbols
 - `make build` - Build only (Linux/macOS)
 - `make clean` - Clean build artifacts (Linux/macOS)
 - `make help` - Show all available commands (Linux/macOS)
+
+### Shell Aliases (Optional)
+For even faster access, source the aliases file:
+```bash
+source aliases.sh
+```
+
+Then use:
+- `hr` - Run HyperRecall
+- `hr-build` - Build only
+- `hr-dev` - Development build
+- `hr-clean` - Clean build
+- `hr-run` - Run without rebuilding
 
 ### Manual Build (Advanced)
 If you prefer to build manually:
