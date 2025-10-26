@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=HyperRecall
+Comment=Desktop spaced repetition study application
+Exec=bash -c "cd '%INSTALL_DIR%' && ./run.sh"
+Icon=%INSTALL_DIR%/assets/icons/app-icon.png
+Terminal=false
+Categories=Education;Science;
+Keywords=study;flashcards;srs;spaced-repetition;learning;
+StartupNotify=true
