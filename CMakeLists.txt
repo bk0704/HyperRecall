@@ -103,7 +103,8 @@ set(HYPERRECALL_SOURCES
     src/render.c
     src/platform.c
     src/cfg.c
-    src/analytics.c)
+    src/analytics.c
+    src/json.c)
 
 set(HYPERRECALL_HEADERS
     src/app.h
@@ -118,7 +119,8 @@ set(HYPERRECALL_HEADERS
     src/render.h
     src/platform.h
     src/cfg.h
-    src/analytics.h)
+    src/analytics.h
+    src/json.h)
 
 add_executable(hyperrecall ${HYPERRECALL_SOURCES} ${HYPERRECALL_HEADERS})
 set_target_properties(hyperrecall PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
