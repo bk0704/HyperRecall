@@ -14,7 +14,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#include <raylib.h>
+#include "types.h"
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096

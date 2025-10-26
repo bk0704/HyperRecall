@@ -1,6 +1,8 @@
 #include "app.h"
 
+#ifndef HYPERRECALL_UI_QT6
 #include <raylib.h>
+#endif
 
 #include <errno.h>
 #include <inttypes.h>
@@ -26,6 +28,13 @@
 #include "srs.h"
 #include "theme.h"
 #include "ui.h"
+
+// Define color constants for Qt backend compatibility
+#ifdef HYPERRECALL_UI_QT6
+#define RED ((Color){230, 41, 55, 255})
+#define GREEN ((Color){0, 228, 48, 255})
+#define RAYWHITE ((Color){245, 245, 245, 255})
+#endif
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
@@ -404,7 +413,9 @@ int app_run(AppContext *app)
     while (platform_begin_frame(app->platform, &frame_info)) {
         bool frame_ok = true;
 
+#ifndef HYPERRECALL_UI_QT6
         ClearBackground(RAYWHITE);
+#endif
 
         if (!srs_update(app->srs, &frame_info)) {
             result = 2;

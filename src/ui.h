@@ -14,8 +14,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#include <raylib.h>
-
+#include "types.h"
 #include "db.h"
 #include "platform.h"
 #include "render.h"

@@ -2,7 +2,7 @@
 
 **Status**: ✅ Production-Ready | 100% Feature Complete | v1.0.0
 
-HyperRecall is a desktop spaced repetition study application built with C17, raylib 5.x, raygui, and SQLite3. It provides a fast, focused study workflow with deep analytics and a modern native UI.
+HyperRecall is a desktop spaced repetition study application built with C17, raylib 5.x (or Qt6), raygui, and SQLite3. It provides a fast, focused study workflow with deep analytics and a modern native UI.
 
 Disclaimer: this is the shitty vibecoded version, I do plan on making another version soon
 
@@ -19,6 +19,7 @@ Disclaimer: this is the shitty vibecoded version, I do plan on making another ve
 * **Analytics Dashboard**: Track progress with heatmaps, trends, and performance metrics
 * **Import/Export**: JSON and CSV formats for deck sharing and backup
 * **Themeable UI**: Modern Dark theme with customizable palettes (Neon Dark, Solar Dawn)
+* **Dual UI Backends**: Choose between Raylib (default) or Qt6 for the user interface
 * **Cross-Platform**: Builds on Linux and Windows (MinGW)
 
 ## 🚀 One-Click Quick Start
@@ -94,6 +95,28 @@ cmake --build build
 ./build/bin/hyperrecall
 ```
 
+#### Building with Qt6 Backend (Optional)
+
+HyperRecall supports an alternative Qt6 UI backend for a more native desktop experience:
+
+```bash
+# Install Qt6 dependencies (Ubuntu/Debian example)
+sudo apt install -y qt6-base-dev
+
+# Configure with Qt6 backend
+cmake -S . -B build-qt -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DHYPERRECALL_UI_BACKEND=QT6
+
+# Build
+cmake --build build-qt
+
+# Run
+./build-qt/bin/hyperrecall
+```
+
+See [INSTALL.md](INSTALL.md) for detailed Qt6 installation instructions on all platforms.
+
 #### Windows
 ```powershell
 # Install dependencies with vcpkg
@@ -127,16 +150,21 @@ HyperRecall/
 │   ├── model.*         # Domain models (cards, topics)
 │   ├── srs.*           # Spaced repetition scheduling
 │   ├── sessions.*      # Study session management
-│   ├── ui.*            # Main UI rendering and interaction
+│   ├── ui.*            # Main UI rendering and interaction (raylib/Qt abstraction)
 │   ├── theme.*         # Theme palette management
 │   ├── render.*        # Rich text and media rendering
 │   ├── media.*         # Media asset handling
-│   ├── platform.*      # Platform-specific utilities
+│   ├── platform.*      # Platform-specific utilities (raylib/Qt abstraction)
 │   ├── cfg.*           # Configuration management
 │   ├── analytics.*     # Analytics tracking and export
 │   ├── import_export.* # JSON/CSV import/export
 │   ├── json.*          # Minimal JSON parser/serializer
-│   └── main.c          # Entry point
+│   ├── main.c          # Entry point (raylib backend)
+│   ├── main_qt.cpp     # Entry point (Qt6 backend)
+│   └── qt/             # Qt6-specific implementation
+│       ├── qt_platform.* # Qt platform abstraction
+│       ├── qt_ui.*       # Qt UI implementation
+│       └── main_window.* # Qt main window
 ├── CMakeLists.txt      # Build configuration
 ├── LICENSE             # MIT License
 └── README.md           # This file

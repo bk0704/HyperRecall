@@ -13,8 +13,7 @@ extern "C" {
 #include <stdbool.h>
 #include <stddef.h>
 
-#include <raylib.h>
-
+#include "types.h"
 #include "theme.h"
 
 /** Describes the font set used when rendering complex text. */
