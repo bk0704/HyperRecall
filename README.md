@@ -4,6 +4,8 @@
 
 HyperRecall is a desktop spaced repetition study application built with C17, raylib 5.x, raygui, and SQLite3. It provides a fast, focused study workflow with deep analytics and a modern native UI.
 
+Disclaimer: this is the shitty vibecoded version, I do plan on making another version soon
+
 > **⚡ Quick Start:** New to HyperRecall? See [QUICKSTART.md](QUICKSTART.md) for the fastest way to get started!
 > 
 > **📊 Project Status:** See [PROJECT_COMPLETION_SUMMARY.md](PROJECT_COMPLETION_SUMMARY.md) for complete feature coverage and completion metrics.
