@@ -15,6 +15,9 @@ static const char* const CARD_TYPE_NAMES[] = {
     [HR_CARD_TYPE_TYPING] = "Typing",
     [HR_CARD_TYPE_ORDERING] = "Ordering",
     [HR_CARD_TYPE_MATCHING] = "Matching",
+    [HR_CARD_TYPE_CODE_OUTPUT] = "CodeOutput",
+    [HR_CARD_TYPE_DEBUG_FIX] = "DebugFix",
+    [HR_CARD_TYPE_COMPARE] = "Compare",
 };
 
 static const char* const MEDIA_TYPE_NAMES[] = {
@@ -161,6 +164,24 @@ void hr_card_extras_init(HrCardExtras* extras, HrCardType type) {
         extras->data.matching.pairs = NULL;
         extras->data.matching.pair_count = 0;
         extras->data.matching.shuffle_right = true;
+        break;
+    case HR_CARD_TYPE_CODE_OUTPUT:
+        extras->data.code_output.code = NULL;
+        extras->data.code_output.language = NULL;
+        extras->data.code_output.expected_output = NULL;
+        extras->data.code_output.ignore_whitespace = true;
+        break;
+    case HR_CARD_TYPE_DEBUG_FIX:
+        extras->data.debug_fix.buggy_code = NULL;
+        extras->data.debug_fix.language = NULL;
+        extras->data.debug_fix.error_description = NULL;
+        extras->data.debug_fix.fixed_code = NULL;
+        break;
+    case HR_CARD_TYPE_COMPARE:
+        extras->data.compare.item_a = NULL;
+        extras->data.compare.item_b = NULL;
+        extras->data.compare.aspect = NULL;
+        extras->data.compare.expected_comparison = NULL;
         break;
     default:
         break;
@@ -330,6 +351,57 @@ static bool hr_card_matching_validate(const HrCardMatchingExtras* extras,
     return true;
 }
 
+static bool hr_card_code_output_validate(const HrCardCodeOutputExtras* extras,
+                                         HrValidationError*            error) {
+    if (!extras) {
+        hr_validation_error_set(error, "extras", "Code output extras missing");
+        return false;
+    }
+    if (!extras->code || hr_string_is_blank(extras->code)) {
+        hr_validation_error_set(error, "code", "Code output cards require code");
+        return false;
+    }
+    if (!extras->expected_output || hr_string_is_blank(extras->expected_output)) {
+        hr_validation_error_set(error, "expected_output",
+                                "Code output cards require expected output");
+        return false;
+    }
+    return true;
+}
+
+static bool hr_card_debug_fix_validate(const HrCardDebugFixExtras* extras,
+                                       HrValidationError*          error) {
+    if (!extras) {
+        hr_validation_error_set(error, "extras", "Debug fix extras missing");
+        return false;
+    }
+    if (!extras->buggy_code || hr_string_is_blank(extras->buggy_code)) {
+        hr_validation_error_set(error, "buggy_code", "Debug fix cards require buggy code");
+        return false;
+    }
+    if (!extras->fixed_code || hr_string_is_blank(extras->fixed_code)) {
+        hr_validation_error_set(error, "fixed_code", "Debug fix cards require fixed code");
+        return false;
+    }
+    return true;
+}
+
+static bool hr_card_compare_validate(const HrCardCompareExtras* extras, HrValidationError* error) {
+    if (!extras) {
+        hr_validation_error_set(error, "extras", "Compare extras missing");
+        return false;
+    }
+    if (!extras->item_a || hr_string_is_blank(extras->item_a)) {
+        hr_validation_error_set(error, "item_a", "Compare cards require item A");
+        return false;
+    }
+    if (!extras->item_b || hr_string_is_blank(extras->item_b)) {
+        hr_validation_error_set(error, "item_b", "Compare cards require item B");
+        return false;
+    }
+    return true;
+}
+
 bool hr_card_extras_validate(const HrCardExtras* extras, HrValidationError* error) {
     if (!extras) {
         hr_validation_error_set(error, "extras", "Card extras missing");
@@ -355,6 +427,12 @@ bool hr_card_extras_validate(const HrCardExtras* extras, HrValidationError* erro
         return hr_card_ordering_validate(&extras->data.ordering, error);
     case HR_CARD_TYPE_MATCHING:
         return hr_card_matching_validate(&extras->data.matching, error);
+    case HR_CARD_TYPE_CODE_OUTPUT:
+        return hr_card_code_output_validate(&extras->data.code_output, error);
+    case HR_CARD_TYPE_DEBUG_FIX:
+        return hr_card_debug_fix_validate(&extras->data.debug_fix, error);
+    case HR_CARD_TYPE_COMPARE:
+        return hr_card_compare_validate(&extras->data.compare, error);
     default:
         hr_validation_error_set(error, "extras", "Unsupported card type for extras validation");
         return false;

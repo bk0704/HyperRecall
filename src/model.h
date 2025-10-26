@@ -36,6 +36,9 @@ typedef enum HrCardType {
     HR_CARD_TYPE_TYPING,
     HR_CARD_TYPE_ORDERING,
     HR_CARD_TYPE_MATCHING,
+    HR_CARD_TYPE_CODE_OUTPUT,
+    HR_CARD_TYPE_DEBUG_FIX,
+    HR_CARD_TYPE_COMPARE,
 } HrCardType;
 
 typedef enum HrMediaType {
@@ -113,6 +116,27 @@ typedef struct HrCardMatchingExtras {
     bool                      shuffle_right;
 } HrCardMatchingExtras;
 
+typedef struct HrCardCodeOutputExtras {
+    const char* code;
+    const char* language;
+    const char* expected_output;
+    bool        ignore_whitespace;
+} HrCardCodeOutputExtras;
+
+typedef struct HrCardDebugFixExtras {
+    const char* buggy_code;
+    const char* language;
+    const char* error_description;
+    const char* fixed_code;
+} HrCardDebugFixExtras;
+
+typedef struct HrCardCompareExtras {
+    const char* item_a;
+    const char* item_b;
+    const char* aspect;
+    const char* expected_comparison;
+} HrCardCompareExtras;
+
 typedef struct HrCardExtras {
     HrCardType type;
     union {
@@ -125,6 +149,9 @@ typedef struct HrCardExtras {
         HrCardTypingExtras         typing;
         HrCardOrderingExtras       ordering;
         HrCardMatchingExtras       matching;
+        HrCardCodeOutputExtras     code_output;
+        HrCardDebugFixExtras       debug_fix;
+        HrCardCompareExtras        compare;
     } data;
 } HrCardExtras;
 
