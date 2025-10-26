@@ -26,48 +26,54 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build pkg-config libraylib-dev libsqlite3-dev
-          echo "TODO: Provide raygui.h via external/raygui/ or a system package."
+          sudo apt-get install -y build-essential cmake ninja-build pkg-config libsqlite3-dev
+          sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
 
-      - name: Clone vcpkg
+      - name: Build and install raylib (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /tmp/raylib
+          cd /tmp/raylib
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+          cmake --build build
+          sudo cmake --install build
+
+      - name: Clone vcpkg (Windows)
+        if: runner.os == 'Windows'
         run: git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
-
-      - name: Bootstrap vcpkg (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: ./vcpkg/bootstrap-vcpkg.sh
 
       - name: Bootstrap vcpkg (Windows)
         if: runner.os == 'Windows'
         run: .\vcpkg\bootstrap-vcpkg.bat
         shell: powershell
 
-      - name: Add vcpkg to PATH (Windows)
-        if: runner.os == 'Windows'
-        run: Add-Content -Path $env:GITHUB_PATH -Value "${{ github.workspace }}\vcpkg"
-        shell: powershell
-
-      - name: Add vcpkg to PATH (Unix)
-        if: runner.os != 'Windows'
-        run: echo "${{ github.workspace }}/vcpkg" >> $GITHUB_PATH
-
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
-        run: |
-          vcpkg install raylib sqlite3 --triplet x64-windows
-          echo "TODO: Acquire raygui.h and set HYPERRECALL_RAYGUI_HEADER or enable HYPERRECALL_USE_SYSTEM_RAYGUI."
+        run: vcpkg install raylib sqlite3 --triplet x64-windows
+        shell: powershell
 
-      - name: Configure
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
         run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            cmake -S . -B "build/${{ matrix.build_type }}" -G Ninja \
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-              "-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
-          else
-            cmake -S . -B "build/${{ matrix.build_type }}" -G Ninja \
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          fi
+          cmake -S . -B "build/${{ matrix.build_type }}" -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         shell: bash
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -S . -B "build/${{ matrix.build_type }}" -G Ninja `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            "-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake"
+        shell: powershell
 
       - name: Build
         run: cmake --build build/${{ matrix.build_type }}
         shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hyperrecall-${{ matrix.os }}-${{ matrix.build_type }}
+          path: build/${{ matrix.build_type }}/bin/hyperrecall*
+          if-no-files-found: warn
