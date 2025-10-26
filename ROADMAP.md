@@ -87,12 +87,12 @@ This document outlines the development status and next steps for HyperRecall.
 ### ⚠️ Partially Implemented
 
 1. **Card Type Coverage**
-   - 7 of 14 spec types implemented
+   - 13 of 14 spec types implemented (93%)
    - **Priority Categorization**:
-     - ✅ **Essential (MVP)**: ShortAnswer, Cloze, MultipleChoice - Already Done
-     - ⚠️ **Important**: Typing (with regex), Ordering, Matching - 2-3 days
-     - ⏳ **Nice to Have**: CodeOutput, DebugFix, Compare - 1-2 days
-     - 🚀 **Future**: Explain, PracticalTask, LabelDiagram, AudioPrompt - 3-5 days
+     - ✅ **Essential (MVP)**: ShortAnswer, Cloze, MultipleChoice - Done
+     - ✅ **Important**: Typing (with regex), Ordering, Matching - Done
+     - ✅ **Nice to Have**: CodeOutput, DebugFix, Compare - Done
+     - ⏳ **Future**: Explain, PracticalTask, LabelDiagram, AudioPrompt - Partially done (only missing these 4)
 
 2. **Runtime Verification**
    - Code compiles and builds
@@ -155,10 +155,10 @@ This document outlines the development status and next steps for HyperRecall.
    - Optimize bottlenecks
 
 7. **Additional Card Types** (3-5 days)
-   - **Priority 1 (Important)**: Typing with regex validation, Ordering, Matching
-   - **Priority 2 (Nice to Have)**: CodeOutput, DebugFix, Compare
-   - **Priority 3 (Future)**: Explain, PracticalTask, LabelDiagram, AudioPrompt
-   - Test each type with validation
+   - **Priority 1 (Important)**: ✅ Typing with regex validation, Ordering, Matching - COMPLETE
+   - **Priority 2 (Nice to Have)**: ✅ CodeOutput, DebugFix, Compare - COMPLETE
+   - **Priority 3 (Future)**: Explain, PracticalTask, LabelDiagram, AudioPrompt - Not yet implemented (4 remaining)
+   - **Status**: 13 of 14 spec card types implemented (93%)
 
 8. **Integration Tests** (2-3 days)
    - Create automated test suite

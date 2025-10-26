@@ -50,20 +50,20 @@ According to spec:
 - ✅ Cloze
 - ✅ MultipleChoice (single)
 - ✅ MultipleChoice (multi - as "MultipleResponse")
-- ❌ Typing (with regex validation)
-- ❌ CodeOutput
-- ❌ DebugFix
+- ✅ Typing (with regex validation)
+- ✅ CodeOutput
+- ✅ DebugFix
 - ❌ Explain
-- ❌ Compare
+- ✅ Compare
 - ❌ PracticalTask
 - ✅ ImageOcclusion
 - ❌ AudioPrompt (has AudioRecall instead)
-- ❌ Ordering
-- ❌ Matching
+- ✅ Ordering
+- ✅ Matching
 - ❌ LabelDiagram
 - ✅ TrueFalse (extra type not in spec)
 
-**Status**: ⚠️ Partial - 7 of spec's 14 card types implemented
+**Status**: ⚠️ Partial - 13 of spec's 14 card types implemented (93%)
 
 ### Card Validation
 - ✅ Validation errors with field and message
