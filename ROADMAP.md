@@ -86,13 +86,7 @@ This document outlines the development status and next steps for HyperRecall.
 
 ### ⚠️ Partially Implemented
 
-1. **Import/Export Database Integration**
-   - Framework complete
-   - Needs actual database queries for card/topic export
-   - Needs insertion logic for import
-   - Media file copying stubbed
-
-2. **Card Type Coverage**
+1. **Card Type Coverage**
    - 7 of 14 spec types implemented
    - **Priority Categorization**:
      - ✅ **Essential (MVP)**: ShortAnswer, Cloze, MultipleChoice - Already Done
@@ -100,7 +94,7 @@ This document outlines the development status and next steps for HyperRecall.
      - ⏳ **Nice to Have**: CodeOutput, DebugFix, Compare - 1-2 days
      - 🚀 **Future**: Explain, PracticalTask, LabelDiagram, AudioPrompt - 3-5 days
 
-3. **Runtime Verification**
+2. **Runtime Verification**
    - Code compiles and builds
    - Needs X11 display for GUI testing
    - Untested on Windows
@@ -130,27 +124,19 @@ This document outlines the development status and next steps for HyperRecall.
 
 ### High Priority (Critical for MVP)
 
-1. **Complete Import/Export Database Integration** (1-2 days)
-   - Implement card query for export
-   - Implement topic query for export
-   - Implement card insertion for import
-   - Implement topic merging for import
-   - Add SRS state serialization
-   - Test round-trip export/import
-
-2. **Add Font Assets** (1 hour)
+1. **Add Font Assets** (1 hour)
    - Download Inter (Regular, SemiBold)
    - Download JetBrains Mono (Regular)
    - Add to assets/fonts/
    - Verify OFL license compliance
 
-3. **Add Icon Assets** (2-4 hours)
+2. **Add Icon Assets** (2-4 hours)
    - Create or download icon set
    - 16x16 or 24x24 PNG format
    - Status, action, and session icons
    - Test with UI
 
-4. **Runtime Verification** (1 day)
+3. **Runtime Verification** (1 day)
    - Test on Linux with X11
    - **Verification Checklist**:
      - [ ] Application launches without crashes
@@ -222,13 +208,13 @@ Assuming focused development:
 
 | Component | Estimate | Status |
 |-----------|----------|--------|
-| Import/Export DB Integration | 2 days | ⚠️ In Progress |
+| Import/Export DB Integration | 2 days | ✅ Complete |
 | Font Assets | 1 hour | ❌ Not Started |
 | Icon Assets | 4 hours | ❌ Not Started |
 | Runtime Verification | 1 day | ❌ Not Started |
 | Windows Build Test | 1 day | ❌ Not Started |
 | Bug Fixes | 1 day | ❌ Not Started |
-| **Total** | **~6 days** | |
+| **Total** | **~4 days remaining** | |
 
 ---
 
