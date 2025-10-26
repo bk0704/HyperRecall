@@ -11,6 +11,7 @@
 #define mkdir(path, mode) _mkdir(path)
 #define strcasecmp _stricmp
 #else
+#include <strings.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -845,7 +846,10 @@ bool theme_manager_save_palette(const struct HrThemeManager *manager,
         if (!ensure_directory_exists(manager->user_directory)) {
             return false;
         }
-        snprintf(path_buffer, sizeof(path_buffer), "%s/%s.json", manager->user_directory, palette->id);
+        int written = snprintf(path_buffer, sizeof(path_buffer), "%s/%s.json", manager->user_directory, palette->id);
+        if (written < 0 || (size_t)written >= sizeof(path_buffer)) {
+            return false;
+        }
     }
 
     return write_palette_to_file(palette, path_buffer);

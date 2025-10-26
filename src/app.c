@@ -319,9 +319,13 @@ AppContext *app_create(void)
     const HrConfig *config_data = cfg_data(app->config);
     if (config_data != NULL) {
         char theme_prefs_path[PATH_MAX];
-        snprintf(theme_prefs_path, sizeof(theme_prefs_path), "%s/theme_palette.json",
+        int written = snprintf(theme_prefs_path, sizeof(theme_prefs_path), "%s/theme_palette.json",
                  config_data->paths.config_dir);
-        theme_manager_set_preferences_file(app->themes, theme_prefs_path);
+        if (written < 0 || (size_t)written >= sizeof(theme_prefs_path)) {
+            fprintf(stderr, "Theme preferences path too long\n");
+        } else {
+            theme_manager_set_preferences_file(app->themes, theme_prefs_path);
+        }
         theme_manager_set_user_directory(app->themes, config_data->paths.config_dir);
     }
 

@@ -1,3 +1,7 @@
+#ifndef _WIN32
+#define _POSIX_C_SOURCE 200112L
+#endif
+
 #include "db.h"
 
 #include "cfg.h"
@@ -450,10 +454,14 @@ static int create_backup_file(DatabaseHandle *handle, const char *tag)
     strftime(timestamp, sizeof(timestamp), "%Y%m%d%H%M%S", &tm_info);
 
     char filename[PATH_MAX];
+    int written;
     if (tag != NULL && tag[0] != '\0') {
-        snprintf(filename, sizeof(filename), "%s/%s-%s.db", handle->backup_dir, timestamp, tag);
+        written = snprintf(filename, sizeof(filename), "%s/%s-%s.db", handle->backup_dir, timestamp, tag);
     } else {
-        snprintf(filename, sizeof(filename), "%s/%s.db", handle->backup_dir, timestamp);
+        written = snprintf(filename, sizeof(filename), "%s/%s.db", handle->backup_dir, timestamp);
+    }
+    if (written < 0 || (size_t)written >= sizeof(filename)) {
+        return -ENAMETOOLONG;
     }
 
     sqlite3 *backup_db = NULL;

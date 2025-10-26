@@ -582,7 +582,7 @@ static bool hr_media_populate_sound(struct HrMediaCache *cache, HrMediaResource 
         return false;
     }
 
-    const uint64_t byte_size = (uint64_t)wave->dataSize;
+    const uint64_t byte_size = (uint64_t)(wave->frameCount * wave->channels * wave->sampleSize / 8);
     if (!hr_media_ensure_budget(cache, HR_MEDIA_RESOURCE_AUDIO, byte_size, now)) {
         UnloadSound(sound);
         return false;
