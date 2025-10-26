@@ -1,88 +1,51 @@
 #include "app.h"
 
+#include <raylib.h>
+
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "cfg.h"
 #include "db.h"
-
-struct PlatformHandle {
-    bool initialized;
-    unsigned int frame_budget;
-    unsigned int frame_counter;
-};
+#include "platform.h"
 
 struct SrsHandle {
-    unsigned int updates_processed;
+    double time_accumulator;
+    uint64_t updates_processed;
 };
 
 struct SessionManager {
-    unsigned int frames_processed;
+    double elapsed_time;
+    uint64_t frames_processed;
 };
 
 struct UiContext {
-    unsigned int frames_rendered;
+    uint64_t frames_rendered;
+    double elapsed_time;
 };
 
 struct AnalyticsHandle {
     bool enabled;
-    unsigned int frames_tracked;
+    uint64_t frames_tracked;
+    double total_time;
+    uint64_t last_frame_index;
 };
-
-static struct PlatformHandle *platform_bootstrap(void)
-{
-    struct PlatformHandle *platform = malloc(sizeof(*platform));
-    if (platform != NULL) {
-        platform->initialized = true;
-        platform->frame_budget = 8U;
-        platform->frame_counter = 0U;
-    }
-    return platform;
-}
-
-static bool platform_process_events(struct PlatformHandle *platform)
-{
-    if (platform == NULL || !platform->initialized) {
-        return false;
-    }
-
-    if (platform->frame_budget == 0U) {
-        platform->initialized = false;
-        return false;
-    }
-
-    platform->frame_budget--;
-    platform->frame_counter++;
-    return true;
-}
-
-static unsigned int platform_frame_index(const struct PlatformHandle *platform)
-{
-    return platform != NULL ? platform->frame_counter : 0U;
-}
-
-static void platform_shutdown(struct PlatformHandle *platform)
-{
-    if (platform != NULL) {
-        platform->initialized = false;
-        free(platform);
-    }
-}
 
 static struct SrsHandle *srs_initialize(void)
 {
-    struct SrsHandle *srs = malloc(sizeof(*srs));
-    if (srs != NULL) {
-        srs->updates_processed = 0U;
-    }
-    return srs;
+    return calloc(1U, sizeof(struct SrsHandle));
 }
 
-static bool srs_update(struct SrsHandle *srs)
+static bool srs_update(struct SrsHandle *srs, const HrPlatformFrame *frame)
 {
-    if (srs == NULL) {
+    if (srs == NULL || frame == NULL) {
         return false;
     }
+
+    srs->time_accumulator += frame->delta_time;
     srs->updates_processed++;
     return true;
 }
@@ -94,18 +57,16 @@ static void srs_shutdown(struct SrsHandle *srs)
 
 static struct SessionManager *sessions_create(void)
 {
-    struct SessionManager *sessions = malloc(sizeof(*sessions));
-    if (sessions != NULL) {
-        sessions->frames_processed = 0U;
-    }
-    return sessions;
+    return calloc(1U, sizeof(struct SessionManager));
 }
 
-static bool sessions_update(struct SessionManager *sessions)
+static bool sessions_update(struct SessionManager *sessions, const HrPlatformFrame *frame)
 {
-    if (sessions == NULL) {
+    if (sessions == NULL || frame == NULL) {
         return false;
     }
+
+    sessions->elapsed_time += frame->delta_time;
     sessions->frames_processed++;
     return true;
 }
@@ -117,19 +78,27 @@ static void sessions_destroy(struct SessionManager *sessions)
 
 static struct UiContext *ui_create(void)
 {
-    struct UiContext *ui = malloc(sizeof(*ui));
-    if (ui != NULL) {
-        ui->frames_rendered = 0U;
-    }
-    return ui;
+    return calloc(1U, sizeof(struct UiContext));
 }
 
-static bool ui_render(struct UiContext *ui)
+static bool ui_render(struct UiContext *ui, const HrPlatformFrame *frame)
 {
-    if (ui == NULL) {
+    if (ui == NULL || frame == NULL) {
         return false;
     }
+
     ui->frames_rendered++;
+    ui->elapsed_time += frame->delta_time;
+
+    const int fps_x = frame->render_width > 120 ? frame->render_width - 120 : 0;
+    DrawFPS(fps_x, 16);
+    DrawText("HyperRecall scaffolding build", 24, 24, 28, DARKGRAY);
+
+    char buffer[128];
+    snprintf(buffer, sizeof(buffer), "Frame %llu  |  %.2f ms",
+        (unsigned long long)frame->index, frame->delta_time * 1000.0);
+    DrawText(buffer, 24, 64, 20, GRAY);
+
     return true;
 }
 
@@ -140,21 +109,22 @@ static void ui_destroy(struct UiContext *ui)
 
 static struct AnalyticsHandle *analytics_create(void)
 {
-    struct AnalyticsHandle *analytics = malloc(sizeof(*analytics));
+    struct AnalyticsHandle *analytics = calloc(1U, sizeof(*analytics));
     if (analytics != NULL) {
         analytics->enabled = true;
-        analytics->frames_tracked = 0U;
     }
     return analytics;
 }
 
-static void analytics_record_frame(struct AnalyticsHandle *analytics, unsigned int frame_index)
+static void analytics_record_frame(struct AnalyticsHandle *analytics, const HrPlatformFrame *frame)
 {
-    if (analytics == NULL || !analytics->enabled) {
+    if (analytics == NULL || frame == NULL || !analytics->enabled) {
         return;
     }
-    (void)frame_index;
+
     analytics->frames_tracked++;
+    analytics->total_time += frame->delta_time;
+    analytics->last_frame_index = frame->index;
 }
 
 static void analytics_flush(struct AnalyticsHandle *analytics)
@@ -162,15 +132,18 @@ static void analytics_flush(struct AnalyticsHandle *analytics)
     if (analytics == NULL || !analytics->enabled) {
         return;
     }
+
     analytics->frames_tracked = 0U;
+    analytics->total_time = 0.0;
+    analytics->last_frame_index = 0U;
 }
 
 static void analytics_shutdown(struct AnalyticsHandle *analytics)
 {
     if (analytics != NULL) {
         analytics->enabled = false;
-        free(analytics);
     }
+    free(analytics);
 }
 
 AppContext *app_create(void)
@@ -186,7 +159,7 @@ AppContext *app_create(void)
         return NULL;
     }
 
-    app->platform = platform_bootstrap();
+    app->platform = platform_create(NULL);
     if (app->platform == NULL) {
         app_destroy(app);
         return NULL;
@@ -236,23 +209,32 @@ int app_run(AppContext *app)
     app->running = true;
     int result = 0;
 
-    while (platform_process_events(app->platform)) {
-        if (!srs_update(app->srs)) {
+    HrPlatformFrame frame_info = {0};
+
+    while (platform_begin_frame(app->platform, &frame_info)) {
+        bool frame_ok = true;
+
+        ClearBackground(RAYWHITE);
+
+        if (!srs_update(app->srs, &frame_info)) {
             result = 2;
-            break;
-        }
-
-        if (!sessions_update(app->sessions)) {
+            frame_ok = false;
+        } else if (!sessions_update(app->sessions, &frame_info)) {
             result = 3;
-            break;
-        }
-
-        if (!ui_render(app->ui)) {
+            frame_ok = false;
+        } else if (!ui_render(app->ui, &frame_info)) {
             result = 4;
-            break;
+            frame_ok = false;
         }
 
-        analytics_record_frame(app->analytics, platform_frame_index(app->platform));
+        analytics_record_frame(app->analytics, &frame_info);
+
+        platform_end_frame(app->platform);
+
+        if (!frame_ok) {
+            platform_request_close(app->platform);
+            break;
+        }
     }
 
     analytics_flush(app->analytics);
@@ -281,7 +263,7 @@ void app_destroy(AppContext *app)
     db_close(app->database);
     app->database = NULL;
 
-    platform_shutdown(app->platform);
+    platform_destroy(app->platform);
     app->platform = NULL;
 
     cfg_unload(app->config);

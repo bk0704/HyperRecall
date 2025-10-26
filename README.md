@@ -55,7 +55,8 @@ These instructions assume raylib, raygui, and SQLite3 development packages are i
 ```bash
 sudo apt update
 sudo apt install -y build-essential cmake ninja-build pkg-config libraylib-dev libsqlite3-dev
-# TODO: Install the raygui header by copying it into external/raygui/ or exposing it via RAYGUI_ROOT.
+# The repository bundles external/raygui/raygui.h. Set -DHYPERRECALL_USE_SYSTEM_RAYGUI=ON to rely on
+# a system-provided header when available.
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 cmake --build build --target run
@@ -73,14 +74,16 @@ cmake --build build-release
 ```powershell
 # Optional: install Ninja if not already available
 choco install ninja -y
-# TODO: Configure vcpkg or your preferred package manager to install raylib 5.x, raygui, and sqlite3.
+# Install raylib 5.x and sqlite3 via vcpkg or your preferred package manager. Enable
+# -DHYPERRECALL_USE_SYSTEM_RAYGUI=ON when raygui is provided by the toolchain; otherwise the bundled
+# header at external/raygui/raygui.h will be used.
 cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Debug `
       -DCMAKE_TOOLCHAIN_FILE=$Env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake
 cmake --build build
 cmake --build build --target run
 ```
 
-> **Note:** On MinGW environments, ensure `RAYLIB_ROOT` and `SQLITE3_ROOT` point to directories containing `include/` and `lib/` folders with the appropriate binaries (`raylib`, `opengl32`, `gdi32`, `winmm`, and `sqlite3`).
+> **Note:** On MinGW environments, ensure `RAYLIB_ROOT` and `SQLITE3_ROOT` point to directories containing `include/` and `lib/` folders with the appropriate binaries (`raylib`, `opengl32`, `gdi32`, `winmm`, and `sqlite3`). Pass `-DHYPERRECALL_USE_SYSTEM_RAYGUI=ON` when raygui ships with your toolchain; otherwise the bundled header at `external/raygui/raygui.h` is used automatically. Toggle the developer overlay on any platform with `-DHYPERRECALL_ENABLE_DEVTOOLS=OFF` when preparing production builds.
 
 ### Developer Tooling
 
