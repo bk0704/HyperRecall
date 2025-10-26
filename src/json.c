@@ -584,7 +584,7 @@ bool hr_json_array_append(HrJsonValue *array, HrJsonValue *value)
 
 static void serialize_string(const char *str, char **out, size_t *out_len, size_t *out_cap)
 {
-    size_t needed = *out_len + strlen(str) * 2 + 3; /* worst case with escapes + quotes */
+    size_t needed = *out_len + strlen(str) * 6 + 3; /* worst case with unicode escapes + quotes */
     if (needed > *out_cap) {
         size_t new_cap = *out_cap * 2;
         while (new_cap < needed) {
@@ -600,10 +600,48 @@ static void serialize_string(const char *str, char **out, size_t *out_len, size_
 
     (*out)[(*out_len)++] = '"';
     while (*str) {
-        if (*str == '"' || *str == '\\') {
-            (*out)[(*out_len)++] = '\\';
+        unsigned char c = (unsigned char)*str++;
+        switch (c) {
+            case '"':
+            case '\\':
+                (*out)[(*out_len)++] = '\\';
+                (*out)[(*out_len)++] = (char)c;
+                break;
+            case '\b':
+                (*out)[(*out_len)++] = '\\';
+                (*out)[(*out_len)++] = 'b';
+                break;
+            case '\f':
+                (*out)[(*out_len)++] = '\\';
+                (*out)[(*out_len)++] = 'f';
+                break;
+            case '\n':
+                (*out)[(*out_len)++] = '\\';
+                (*out)[(*out_len)++] = 'n';
+                break;
+            case '\r':
+                (*out)[(*out_len)++] = '\\';
+                (*out)[(*out_len)++] = 'r';
+                break;
+            case '\t':
+                (*out)[(*out_len)++] = '\\';
+                (*out)[(*out_len)++] = 't';
+                break;
+            default: {
+                if (c < 0x20) {
+                    static const char hex_digits[] = "0123456789ABCDEF";
+                    (*out)[(*out_len)++] = '\\';
+                    (*out)[(*out_len)++] = 'u';
+                    (*out)[(*out_len)++] = '0';
+                    (*out)[(*out_len)++] = '0';
+                    (*out)[(*out_len)++] = hex_digits[(c >> 4) & 0xF];
+                    (*out)[(*out_len)++] = hex_digits[c & 0xF];
+                } else {
+                    (*out)[(*out_len)++] = (char)c;
+                }
+                break;
+            }
         }
-        (*out)[(*out_len)++] = *str++;
     }
     (*out)[(*out_len)++] = '"';
 }
