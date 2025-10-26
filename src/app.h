@@ -22,6 +22,18 @@ struct AnalyticsHandle;
 struct HrThemeManager;
 
 /**
+ * @brief Tracks autosave scheduling and bookkeeping for database snapshots.
+ */
+typedef struct AppAutosaveState {
+    bool enabled;              /**< True when periodic autosaves are active. */
+    double interval_seconds;   /**< Cadence between autosave attempts in seconds. */
+    double elapsed_seconds;    /**< Seconds elapsed since the last autosave trigger. */
+    bool directory_ready;      /**< True once the autosave directory has been prepared. */
+    bool last_backup_failed;   /**< Tracks whether the previous autosave attempt failed. */
+    size_t backups_completed;  /**< Number of successful autosave backups performed. */
+} AppAutosaveState;
+
+/**
  * @brief Aggregates subsystem handles required to drive the application.
  */
 typedef struct AppContext {
@@ -33,6 +45,7 @@ typedef struct AppContext {
     struct UiContext *ui;             /**< UI rendering subsystem. */
     struct AnalyticsHandle *analytics;/**< Analytics collection and export. */
     struct HrThemeManager *themes;    /**< Theme palette manager. */
+    AppAutosaveState autosave;        /**< Autosave scheduling/bookkeeping state. */
     bool running;                     /**< Tracks whether the main loop is active. */
 } AppContext;
 

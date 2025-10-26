@@ -1,5 +1,7 @@
 #include "ui.h"
 
+#include "analytics.h"
+
 #include <ctype.h>
 #include <math.h>
 #include <sqlite3.h>
@@ -67,6 +69,7 @@ struct UiContext {
     struct SessionManager *sessions;
     DatabaseHandle *database;
     struct ImportExportContext *import_export;
+    struct AnalyticsHandle *analytics;
 
     SessionCallbacks chained_callbacks;
 
@@ -530,10 +533,46 @@ static void ui_draw_analytics(UiContext *ui, Rectangle bounds)
     Vector2 header_pos = {bounds.x + 18.0f, bounds.y + 18.0f};
     ui_draw_text_line(&ui->render, header_pos, "Analytics Dashboard", text_color, 1.1f);
 
+    const HrAnalyticsDashboard *dashboard = analytics_dashboard(ui->analytics);
+    bool analytics_ready = dashboard != NULL && analytics_is_enabled(ui->analytics);
+
+    size_t total_reviews = ui->metrics.total_reviews;
+    double average_interval = ui->metrics.average_interval_minutes;
+    const float *recent_intervals = ui->metrics.recent_intervals;
+    size_t recent_count = ui->metrics.recent_count;
+    size_t rating_counts[HR_ANALYTICS_RATING_BUCKETS] = {0};
+    memcpy(rating_counts, ui->metrics.rating_counts, sizeof(rating_counts));
+
+    size_t current_streak = 0U;
+    size_t longest_streak = 0U;
+
+    if (analytics_ready) {
+        total_reviews = dashboard->reviews.total_reviews;
+        average_interval = dashboard->reviews.average_interval_minutes;
+        recent_intervals = dashboard->reviews.recent_intervals;
+        recent_count = dashboard->reviews.recent_count;
+        memcpy(rating_counts, dashboard->reviews.rating_counts, sizeof(rating_counts));
+        current_streak = dashboard->streaks.current_streak;
+        longest_streak = dashboard->streaks.longest_streak;
+    }
+
     char summary[128];
-    snprintf(summary, sizeof(summary), "Reviews: %zu  |  Avg Interval: %.1f mins",
-             ui->metrics.total_reviews,
-             ui->metrics.average_interval_minutes);
+    if (analytics_ready && current_streak > 0U) {
+        snprintf(summary,
+                 sizeof(summary),
+                 "Reviews: %zu  |  Avg Interval: %.1f mins  |  Streak: %zu day%s (Best %zu)",
+                 total_reviews,
+                 average_interval,
+                 current_streak,
+                 current_streak == 1U ? "" : "s",
+                 longest_streak);
+    } else {
+        snprintf(summary,
+                 sizeof(summary),
+                 "Reviews: %zu  |  Avg Interval: %.1f mins",
+                 total_reviews,
+                 average_interval);
+    }
     ui_draw_text_line(&ui->render, (Vector2){bounds.x + 18.0f, bounds.y + 54.0f}, summary, muted_color, 0.8f);
 
     Rectangle chart_bounds = {
@@ -553,8 +592,8 @@ static void ui_draw_analytics(UiContext *ui, Rectangle bounds)
 
     render_draw_line_chart(&ui->render,
                            chart_bounds,
-                           ui->metrics.recent_intervals,
-                           ui->metrics.recent_count,
+                           recent_intervals,
+                           recent_count,
                            &options);
 
     Rectangle ratings_bounds = {
@@ -575,17 +614,18 @@ static void ui_draw_analytics(UiContext *ui, Rectangle bounds)
     const char *rating_labels[] = {"Fail", "Hard", "Good", "Easy", "Cram"};
 
     for (size_t i = 0; i < ARRAY_SIZE(rating_labels); ++i) {
+        float share = (total_reviews > 0U)
+                          ? (float)rating_counts[i] / (float)total_reviews
+                          : 0.0f;
         Rectangle bar = {
             ratings_bounds.x,
             ratings_bounds.y + (float)i * 28.0f,
-            ratings_bounds.width * (ui->metrics.total_reviews > 0
-                                        ? (float)ui->metrics.rating_counts[i] / (float)ui->metrics.total_reviews
-                                        : 0.0f),
+            ratings_bounds.width * share,
             20.0f,
         };
         DrawRectangleRec(bar, rating_colors[i]);
         char label_buffer[64];
-        snprintf(label_buffer, sizeof(label_buffer), "%s (%zu)", rating_labels[i], ui->metrics.rating_counts[i]);
+        snprintf(label_buffer, sizeof(label_buffer), "%s (%zu)", rating_labels[i], rating_counts[i]);
         DrawTextEx(ui->render.fonts.regular,
                    label_buffer,
                    (Vector2){ratings_bounds.x + 6.0f, ratings_bounds.y + (float)i * 28.0f},
@@ -934,6 +974,14 @@ void ui_attach_session_manager(UiContext *ui,
         callbacks.session_user_data = ui;
         session_manager_set_callbacks(sessions, &callbacks);
     }
+}
+
+void ui_attach_analytics(UiContext *ui, struct AnalyticsHandle *analytics)
+{
+    if (ui == NULL) {
+        return;
+    }
+    ui->analytics = analytics;
 }
 
 void ui_attach_database(UiContext *ui, DatabaseHandle *database)
