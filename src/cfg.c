@@ -430,13 +430,14 @@ struct ConfigHandle *cfg_load(const char *explicit_path)
         rc = 0;
     }
 
-    if (rc != 0) {
-        free(handle);
-        return NULL;
+    if (rc == 0) {
+        apply_environment_overrides(&handle->config, explicit_path);
+        handle->dirty = false;
+        return handle;
     }
 
-    handle->dirty = false;
-    return handle;
+    free(handle);
+    return NULL;
 }
 
 int cfg_reload(struct ConfigHandle *handle)
@@ -460,11 +461,16 @@ int cfg_reload(struct ConfigHandle *handle)
         if (rc != 0) {
             return rc;
         }
+        rc = 0;
     }
 
-    handle->config = fresh;
-    handle->dirty = false;
-    return 0;
+    if (rc == 0) {
+        apply_environment_overrides(&fresh, handle->config.paths.settings_path);
+        handle->config = fresh;
+        handle->dirty = false;
+    }
+
+    return rc;
 }
 
 int cfg_save(const struct ConfigHandle *handle)

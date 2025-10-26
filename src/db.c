@@ -317,42 +317,6 @@ static int apply_pragmas(sqlite3 *db)
     return SQLITE_OK;
 }
 
-static int copy_file(const char *src_path, const char *dst_path)
-{
-    FILE *src = fopen(src_path, "rb");
-    if (src == NULL) {
-        return -errno;
-    }
-
-    FILE *dst = fopen(dst_path, "wb");
-    if (dst == NULL) {
-        int err = errno;
-        fclose(src);
-        return -err;
-    }
-
-    char buffer[32768];
-    size_t read_bytes = 0U;
-    int rc = 0;
-    while ((read_bytes = fread(buffer, 1U, sizeof(buffer), src)) > 0U) {
-        if (fwrite(buffer, 1U, read_bytes, dst) != read_bytes) {
-            rc = -EIO;
-            break;
-        }
-    }
-
-    if (ferror(src) != 0) {
-        rc = -EIO;
-    }
-
-    fclose(src);
-    if (fclose(dst) != 0 && rc == 0) {
-        rc = -errno;
-    }
-
-    return rc;
-}
-
 static int compare_dirent_names(const void *lhs, const void *rhs)
 {
 #ifndef _WIN32
@@ -457,7 +421,7 @@ static int prune_backups(const char *backup_dir, const HrBackupPolicy *policy)
 
 static int create_backup_file(DatabaseHandle *handle, const char *tag)
 {
-    if (handle == NULL || handle->database_path[0] == '\0') {
+    if (handle == NULL || handle->database_path[0] == '\0' || handle->connection == NULL) {
         return -EINVAL;
     }
 
@@ -487,9 +451,47 @@ static int create_backup_file(DatabaseHandle *handle, const char *tag)
         snprintf(filename, sizeof(filename), "%s/%s.db", handle->backup_dir, timestamp);
     }
 
-    int rc = copy_file(handle->database_path, filename);
-    if (rc != 0) {
-        return rc;
+    sqlite3 *backup_db = NULL;
+    int rc = sqlite3_open_v2(filename,
+                             &backup_db,
+                             SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX,
+                             NULL);
+    if (rc != SQLITE_OK) {
+        if (backup_db != NULL) {
+            sqlite3_close(backup_db);
+        }
+        remove(filename);
+        return rc > 0 ? -rc : rc;
+    }
+
+    sqlite3_backup *backup = sqlite3_backup_init(backup_db, "main", handle->connection, "main");
+    if (backup == NULL) {
+        rc = sqlite3_errcode(backup_db);
+    } else {
+        do {
+            rc = sqlite3_backup_step(backup, 128);
+            if (rc == SQLITE_BUSY || rc == SQLITE_LOCKED) {
+                sqlite3_sleep(25);
+            }
+        } while (rc == SQLITE_BUSY || rc == SQLITE_LOCKED);
+
+        int finish_rc = sqlite3_backup_finish(backup);
+        if (rc == SQLITE_DONE) {
+            rc = SQLITE_OK;
+        }
+        if (finish_rc != SQLITE_OK) {
+            rc = finish_rc;
+        }
+    }
+
+    int close_rc = sqlite3_close(backup_db);
+    if (rc == SQLITE_OK && close_rc != SQLITE_OK) {
+        rc = close_rc;
+    }
+
+    if (rc != SQLITE_OK) {
+        remove(filename);
+        return rc > 0 ? -rc : rc;
     }
 
     rc = prune_backups(handle->backup_dir, &handle->backup_policy);
