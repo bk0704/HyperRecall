@@ -38,4 +38,4 @@ HyperRecall uses a small custom PNG icon set for UI feedback and actions.
 
 ## Current Status
 
-⚠️ **Icon files not yet included in repository** - The application will use text-only buttons if these files are missing. For the full intended UX, please add the icon files as PNG images in this directory.
+✅ **Icon files included in repository** - All required icon files have been added as 24x24 PNG images with transparency. The application will use these icons for the full intended UX.
