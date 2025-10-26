@@ -7,7 +7,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "analytics.h"
 #include "cfg.h"
 #include "db.h"
 #include "platform.h"
@@ -18,13 +20,6 @@
 struct SrsHandle {
     double time_accumulator;
     uint64_t updates_processed;
-};
-
-struct AnalyticsHandle {
-    bool enabled;
-    uint64_t frames_tracked;
-    double total_time;
-    uint64_t last_frame_index;
 };
 
 static struct SrsHandle *srs_initialize(void)
@@ -46,45 +41,6 @@ static bool srs_update(struct SrsHandle *srs, const HrPlatformFrame *frame)
 static void srs_shutdown(struct SrsHandle *srs)
 {
     free(srs);
-}
-
-static struct AnalyticsHandle *analytics_create(void)
-{
-    struct AnalyticsHandle *analytics = calloc(1U, sizeof(*analytics));
-    if (analytics != NULL) {
-        analytics->enabled = true;
-    }
-    return analytics;
-}
-
-static void analytics_record_frame(struct AnalyticsHandle *analytics, const HrPlatformFrame *frame)
-{
-    if (analytics == NULL || frame == NULL || !analytics->enabled) {
-        return;
-    }
-
-    analytics->frames_tracked++;
-    analytics->total_time += frame->delta_time;
-    analytics->last_frame_index = frame->index;
-}
-
-static void analytics_flush(struct AnalyticsHandle *analytics)
-{
-    if (analytics == NULL || !analytics->enabled) {
-        return;
-    }
-
-    analytics->frames_tracked = 0U;
-    analytics->total_time = 0.0;
-    analytics->last_frame_index = 0U;
-}
-
-static void analytics_shutdown(struct AnalyticsHandle *analytics)
-{
-    if (analytics != NULL) {
-        analytics->enabled = false;
-    }
-    free(analytics);
 }
 
 static void theme_usage_callback(const HrThemePalette *palette, void *user_data)
@@ -167,8 +123,26 @@ AppContext *app_create(void)
         return NULL;
     }
 
+    HrAnalyticsConfig analytics_config = {.enabled = true};
+    if (config_data != NULL) {
+        analytics_config = config_data->analytics;
+    }
+
+    app->analytics = analytics_create(&analytics_config);
+    if (app->analytics == NULL) {
+        app_destroy(app);
+        return NULL;
+    }
+
+    ui_attach_analytics(app->ui, app->analytics);
+
+    SessionCallbacks session_callbacks;
+    memset(&session_callbacks, 0, sizeof(session_callbacks));
+    session_callbacks.analytics_event = analytics_record_session_event;
+    session_callbacks.analytics_user_data = app->analytics;
+
     ui_attach_theme_manager(app->ui, app->themes);
-    ui_attach_session_manager(app->ui, app->sessions, NULL);
+    ui_attach_session_manager(app->ui, app->sessions, &session_callbacks);
     ui_attach_database(app->ui, app->database);
 
     float base_font_size = 20.0f;
@@ -176,12 +150,6 @@ AppContext *app_create(void)
         base_font_size = (float)config_data->ui.font_size_pt;
     }
     ui_set_fonts(app->ui, NULL, base_font_size);
-
-    app->analytics = analytics_create();
-    if (app->analytics == NULL) {
-        app_destroy(app);
-        return NULL;
-    }
 
     app->running = false;
     return app;

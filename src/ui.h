@@ -23,6 +23,7 @@ extern "C" {
 #include "theme.h"
 
 struct ImportExportContext;
+struct AnalyticsHandle;
 
 /**
  * Enumerates the high level screen groupings shown by the UI.
@@ -56,6 +57,9 @@ void ui_attach_theme_manager(UiContext *ui, struct HrThemeManager *themes);
 void ui_attach_session_manager(UiContext *ui,
                                struct SessionManager *sessions,
                                const SessionCallbacks *forward_callbacks);
+
+/** Provides the analytics handle used for dashboards and charts. */
+void ui_attach_analytics(UiContext *ui, struct AnalyticsHandle *analytics);
 
 /** Provides the database handle used for topic/card listings. */
 void ui_attach_database(UiContext *ui, DatabaseHandle *database);
