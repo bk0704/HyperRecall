@@ -2,6 +2,8 @@
 
 HyperRecall is a desktop spaced repetition study application built with C17, raylib 5.x, raygui, and SQLite3. It provides a fast, focused study workflow with deep analytics and a modern native UI.
 
+> **⚡ Quick Start:** New to HyperRecall? See [QUICKSTART.md](QUICKSTART.md) for the fastest way to get started!
+
 ## Features
 
 * **Spaced Repetition**: Hybrid "HyperSRS" algorithm combining stability-based mastery and Leitner-style cram modes
@@ -13,7 +15,36 @@ HyperRecall is a desktop spaced repetition study application built with C17, ray
 * **Themeable UI**: Modern Dark theme with customizable palettes (Neon Dark, Solar Dawn)
 * **Cross-Platform**: Builds on Linux and Windows (MinGW)
 
-## Quick Start
+## 🚀 One-Click Quick Start
+
+**The fastest way to run HyperRecall:**
+
+### Linux / macOS
+```bash
+./run.sh
+```
+
+Or using Make:
+```bash
+make run
+```
+
+### Windows
+Double-click `run.bat` or run in PowerShell:
+```powershell
+.\run.ps1
+```
+
+That's it! The script will automatically configure, build, and launch HyperRecall.
+
+For a desktop launcher (Linux):
+```bash
+./install-launcher.sh
+```
+
+---
+
+## Full Installation Guide
 
 ### Prerequisites
 
@@ -25,47 +56,52 @@ HyperRecall requires the following dependencies:
 * **Ninja or Make** — Build tool
 * **C17 compiler** — GCC, Clang, or MSVC
 
-### Linux Build Instructions
+### Installing Dependencies
 
+#### Linux (Ubuntu/Debian)
 ```bash
-# Install dependencies (Ubuntu/Debian)
+# Quick dependency installation
+make install-deps
+
+# Or manually:
 sudo apt update
 sudo apt install -y build-essential cmake ninja-build pkg-config libsqlite3-dev
 sudo apt install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
 
-# Build and install raylib 5.0 (if not available via package manager)
+# Install raylib (if not available via package manager)
 git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /tmp/raylib
 cd /tmp/raylib
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
 cmake --build build
 sudo cmake --install build
+```
 
-# Build HyperRecall
-cd /path/to/HyperRecall
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+#### Manual Build (if you prefer)
+```bash
+# Configure
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+# Build
 cmake --build build
 
 # Run
 ./build/bin/hyperrecall
 ```
 
-### Windows Build Instructions
-
+#### Windows
 ```powershell
-# Install Ninja (optional)
-choco install ninja -y
-
-# Use vcpkg to install dependencies
+# Install dependencies with vcpkg
 git clone https://github.com/microsoft/vcpkg.git
 .\vcpkg\bootstrap-vcpkg.bat
 .\vcpkg\vcpkg install raylib sqlite3 --triplet x64-windows
 
-# Build HyperRecall
-cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Debug `
+# Then just run (will auto-configure and build):
+.\run.ps1
+
+# Or manually configure and build:
+cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release `
       -DCMAKE_TOOLCHAIN_FILE=.\vcpkg\scripts\buildsystems\vcpkg.cmake
 cmake --build build
-
-# Run
 .\build\bin\hyperrecall.exe
 ```
 
