@@ -266,12 +266,12 @@ MIT License. See `LICENSE` file for details.
 
 ## Contributing
 
-Contributions are welcome! Please:
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes with tests
-4. Submit a pull request
+- Setting up your development environment
+- Coding standards and best practices
+- Submitting pull requests
+- Areas where contributions are needed
 
 ### Development Tools
 
