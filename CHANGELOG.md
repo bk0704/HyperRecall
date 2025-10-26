@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2025-10-26
+
+### Added
+- **Explain** card type - Free-form explanation prompts with rubric evaluation
+- **PracticalTask** card type - Hands-on task completion with verification
+- **LabelDiagram** card type - Diagram annotation with position tracking
+- **AudioPrompt** card type - Audio-based question cards with replay control
+
+### Changed
+- Updated project status to 100% feature complete
+- Version bumped to 1.0.0 (stable release)
+
+### Project Status
+- **100% Feature Complete** - All card types implemented!
+- 17 of 17 card types implemented
+- Complete build system with CMake/Ninja
+- Full UI framework with raylib/raygui
+- Complete database layer with SQLite
+- Import/export functionality (JSON/CSV)
+- Analytics and SRS algorithm
+- Cross-platform support (Linux/Windows)
+- Comprehensive documentation
+- One-click build scripts
+
 ## [0.9.3] - 2025-10-26
 
 ### Added

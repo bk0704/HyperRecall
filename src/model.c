@@ -18,6 +18,10 @@ static const char* const CARD_TYPE_NAMES[] = {
     [HR_CARD_TYPE_CODE_OUTPUT] = "CodeOutput",
     [HR_CARD_TYPE_DEBUG_FIX] = "DebugFix",
     [HR_CARD_TYPE_COMPARE] = "Compare",
+    [HR_CARD_TYPE_EXPLAIN] = "Explain",
+    [HR_CARD_TYPE_PRACTICAL_TASK] = "PracticalTask",
+    [HR_CARD_TYPE_LABEL_DIAGRAM] = "LabelDiagram",
+    [HR_CARD_TYPE_AUDIO_PROMPT] = "AudioPrompt",
 };
 
 static const char* const MEDIA_TYPE_NAMES[] = {
@@ -182,6 +186,31 @@ void hr_card_extras_init(HrCardExtras* extras, HrCardType type) {
         extras->data.compare.item_b = NULL;
         extras->data.compare.aspect = NULL;
         extras->data.compare.expected_comparison = NULL;
+        break;
+    case HR_CARD_TYPE_EXPLAIN:
+        extras->data.explain.topic = NULL;
+        extras->data.explain.rubric = NULL;
+        extras->data.explain.min_words = 0;
+        extras->data.explain.require_keywords = false;
+        extras->data.explain.keywords = NULL;
+        break;
+    case HR_CARD_TYPE_PRACTICAL_TASK:
+        extras->data.practical_task.task_description = NULL;
+        extras->data.practical_task.success_criteria = NULL;
+        extras->data.practical_task.hints = NULL;
+        extras->data.practical_task.requires_verification = false;
+        break;
+    case HR_CARD_TYPE_LABEL_DIAGRAM:
+        extras->data.label_diagram.diagram_uuid = NULL;
+        extras->data.label_diagram.labels = NULL;
+        extras->data.label_diagram.label_count = 0;
+        extras->data.label_diagram.require_exact = false;
+        break;
+    case HR_CARD_TYPE_AUDIO_PROMPT:
+        extras->data.audio_prompt.audio_uuid = NULL;
+        extras->data.audio_prompt.question_text = NULL;
+        extras->data.audio_prompt.allow_replay = true;
+        extras->data.audio_prompt.max_replays = 3;
         break;
     default:
         break;
@@ -402,6 +431,72 @@ static bool hr_card_compare_validate(const HrCardCompareExtras* extras, HrValida
     return true;
 }
 
+static bool hr_card_explain_validate(const HrCardExplainExtras* extras, HrValidationError* error) {
+    if (!extras) {
+        hr_validation_error_set(error, "extras", "Explain extras missing");
+        return false;
+    }
+    if (!extras->topic || hr_string_is_blank(extras->topic)) {
+        hr_validation_error_set(error, "topic", "Explain cards require a topic");
+        return false;
+    }
+    return true;
+}
+
+static bool hr_card_practical_task_validate(const HrCardPracticalTaskExtras* extras, HrValidationError* error) {
+    if (!extras) {
+        hr_validation_error_set(error, "extras", "PracticalTask extras missing");
+        return false;
+    }
+    if (!extras->task_description || hr_string_is_blank(extras->task_description)) {
+        hr_validation_error_set(error, "task_description", "PracticalTask cards require a task description");
+        return false;
+    }
+    if (!extras->success_criteria || hr_string_is_blank(extras->success_criteria)) {
+        hr_validation_error_set(error, "success_criteria", "PracticalTask cards require success criteria");
+        return false;
+    }
+    return true;
+}
+
+static bool hr_card_label_diagram_validate(const HrCardLabelDiagramExtras* extras, HrValidationError* error) {
+    if (!extras) {
+        hr_validation_error_set(error, "extras", "LabelDiagram extras missing");
+        return false;
+    }
+    if (!extras->diagram_uuid || hr_string_is_blank(extras->diagram_uuid)) {
+        hr_validation_error_set(error, "diagram_uuid", "LabelDiagram cards require a diagram UUID");
+        return false;
+    }
+    if (extras->label_count == 0 || !extras->labels) {
+        hr_validation_error_set(error, "labels", "LabelDiagram cards require at least one label");
+        return false;
+    }
+    for (size_t i = 0; i < extras->label_count; ++i) {
+        if (!extras->labels[i].label || hr_string_is_blank(extras->labels[i].label)) {
+            hr_validation_error_set(error, "labels", "LabelDiagram label text cannot be blank");
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool hr_card_audio_prompt_validate(const HrCardAudioPromptExtras* extras, HrValidationError* error) {
+    if (!extras) {
+        hr_validation_error_set(error, "extras", "AudioPrompt extras missing");
+        return false;
+    }
+    if (!extras->audio_uuid || hr_string_is_blank(extras->audio_uuid)) {
+        hr_validation_error_set(error, "audio_uuid", "AudioPrompt cards require an audio UUID");
+        return false;
+    }
+    if (extras->allow_replay && extras->max_replays < 1) {
+        hr_validation_error_set(error, "max_replays", "AudioPrompt max_replays must be at least 1 if replay is allowed");
+        return false;
+    }
+    return true;
+}
+
 bool hr_card_extras_validate(const HrCardExtras* extras, HrValidationError* error) {
     if (!extras) {
         hr_validation_error_set(error, "extras", "Card extras missing");
@@ -433,6 +528,14 @@ bool hr_card_extras_validate(const HrCardExtras* extras, HrValidationError* erro
         return hr_card_debug_fix_validate(&extras->data.debug_fix, error);
     case HR_CARD_TYPE_COMPARE:
         return hr_card_compare_validate(&extras->data.compare, error);
+    case HR_CARD_TYPE_EXPLAIN:
+        return hr_card_explain_validate(&extras->data.explain, error);
+    case HR_CARD_TYPE_PRACTICAL_TASK:
+        return hr_card_practical_task_validate(&extras->data.practical_task, error);
+    case HR_CARD_TYPE_LABEL_DIAGRAM:
+        return hr_card_label_diagram_validate(&extras->data.label_diagram, error);
+    case HR_CARD_TYPE_AUDIO_PROMPT:
+        return hr_card_audio_prompt_validate(&extras->data.audio_prompt, error);
     default:
         hr_validation_error_set(error, "extras", "Unsupported card type for extras validation");
         return false;
