@@ -258,11 +258,27 @@ MIT License. See `LICENSE` file for details.
 
 ## Documentation
 
-- **[PROJECT_COMPLETION_SUMMARY.md](PROJECT_COMPLETION_SUMMARY.md)** - Comprehensive project status and feature coverage (93% complete!)
+### Quick Start
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in seconds with one-click run
+- **[INSTALL.md](INSTALL.md)** - Detailed installation guide for all platforms
+- **[FAQ.md](FAQ.md)** - Frequently asked questions and answers
+
+### Usage & Development
 - **[USAGE.md](USAGE.md)** - Comprehensive guide to building, running, and developing
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solutions to common problems
+- **[ACCESS_METHODS.md](ACCESS_METHODS.md)** - All ways to run HyperRecall
+- **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** - Code organization and architecture
+
+### Project Information
+- **[PROJECT_COMPLETION_SUMMARY.md](PROJECT_COMPLETION_SUMMARY.md)** - Project status (93% complete!)
 - **[ROADMAP.md](ROADMAP.md)** - Development status and future plans
-- **[ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md)** - Testing status and acceptance criteria
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+- **[ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md)** - Testing status and criteria
+
+### Community
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute to the project
+- **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** - Community guidelines
+- **[SECURITY.md](SECURITY.md)** - Security policy and vulnerability reporting
 
 ## Contributing
 
