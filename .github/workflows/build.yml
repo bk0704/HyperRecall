@@ -40,7 +40,7 @@ jobs:
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
-        run: vcpkg install qt6-base sqlite3 --triplet x64-windows
+        run: vcpkg install qtbase sqlite3 --triplet x64-windows
         shell: powershell
 
       - name: Configure (Linux)
