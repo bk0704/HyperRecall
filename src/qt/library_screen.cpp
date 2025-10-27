@@ -18,6 +18,35 @@
 
 extern "C" {
 #include <sqlite3.h>
+#include "../model.h"
+}
+
+// Helper function to get card type name
+static const char* getCardTypeName(int type) {
+    static const char* names[] = {
+        "Short Answer",         // 0
+        "Cloze",               // 1
+        "Multiple Choice",     // 2
+        "Multi-Select",        // 3
+        "True/False",          // 4
+        "Image Occlusion",     // 5
+        "Audio Recall",        // 6
+        "Typing",              // 7
+        "Ordering",            // 8
+        "Matching",            // 9
+        "Code Output",         // 10
+        "Debug Fix",           // 11
+        "Compare",             // 12
+        "Explain",             // 13
+        "Practical Task",      // 14
+        "Label Diagram",       // 15
+        "Audio Prompt"         // 16
+    };
+    
+    if (type >= 0 && type < 17) {
+        return names[type];
+    }
+    return "Unknown";
 }
 
 LibraryScreenWidget::LibraryScreenWidget(QWidget *parent)
@@ -176,13 +205,14 @@ void LibraryScreenWidget::refreshTopics()
     
     m_topicTree->clear();
     
-    // Query all topics from database
+    // Query all topics from database - ORDER BY parent_id first to ensure parents are processed before children
     sqlite3_stmt *stmt = nullptr;
-    const char *sql = "SELECT id, title, parent_id FROM topics ORDER BY parent_id, title";
+    const char *sql = "SELECT id, title, parent_id FROM topics ORDER BY COALESCE(parent_id, 0), title";
     
     if (db_prepare(m_database, &stmt, sql) == SQLITE_OK) {
-        // First pass: create all items
+        // Store items by ID for hierarchy building
         QMap<sqlite3_int64, QTreeWidgetItem*> itemMap;
+        QList<QPair<QTreeWidgetItem*, sqlite3_int64>> orphans;
         
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             sqlite3_int64 id = sqlite3_column_int64(stmt, 0);
@@ -195,11 +225,26 @@ void LibraryScreenWidget::refreshTopics()
             
             itemMap[id] = item;
             
-            // If has parent, add as child; otherwise add to root
-            if (parent_id != 0 && itemMap.contains(parent_id)) {
-                itemMap[parent_id]->addChild(item);
+            // Try to add to parent if it exists
+            if (parent_id != 0) {
+                if (itemMap.contains(parent_id)) {
+                    itemMap[parent_id]->addChild(item);
+                } else {
+                    // Parent not yet seen, remember for later
+                    orphans.append(qMakePair(item, parent_id));
+                }
             } else {
                 m_topicTree->addTopLevelItem(item);
+            }
+        }
+        
+        // Process any orphans (in case parent_id ordering wasn't perfect)
+        for (const auto &orphan : orphans) {
+            if (itemMap.contains(orphan.second)) {
+                itemMap[orphan.second]->addChild(orphan.first);
+            } else {
+                // Parent doesn't exist, add to root
+                m_topicTree->addTopLevelItem(orphan.first);
             }
         }
         
@@ -274,9 +319,9 @@ void LibraryScreenWidget::refreshCards()
                 QString::fromUtf8(prompt ? prompt : "")
             ));
             
-            // Type (simplified - would need proper card type enum)
+            // Type
             m_cardTable->setItem(row, 1, new QTableWidgetItem(
-                QString("Type %1").arg(card_type)
+                QString::fromUtf8(getCardTypeName(card_type))
             ));
             
             // Due date

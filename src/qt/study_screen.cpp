@@ -173,8 +173,7 @@ void StudyScreenWidget::update()
         // Update UI to show current card
         size_t remaining = session_manager_remaining(m_sessions);
         m_statusLabel->setText(
-            QString("Study Session Active - Card %1 of %2")
-                .arg(1)  // Position would need tracking
+            QString("Study Session Active - %1 cards remaining")
                 .arg(remaining)
         );
         

@@ -14,6 +14,9 @@ extern "C" {
 #include "../analytics.h"
 }
 
+// Constants
+static const char* NO_DATA_PLACEHOLDER = "N/A";
+
 AnalyticsScreenWidget::AnalyticsScreenWidget(QWidget *parent)
     : QWidget(parent)
     , m_analytics(nullptr)
@@ -138,17 +141,18 @@ void AnalyticsScreenWidget::refreshStats()
     
     // Update average ease (calculated from review data)
     if (dashboard->reviews.total_reviews > 0) {
-        // Calculate average from rating distribution
+        // Calculate weighted average from rating distribution
+        // Ratings: FAIL=0, HARD=1, GOOD=2, EASY=3, CRAM=4
         size_t total = 0;
         size_t weighted = 0;
-        for (size_t i = 0; i < HR_ANALYTICS_RATING_BUCKETS && i < 5; i++) {
+        for (size_t i = 0; i < HR_ANALYTICS_RATING_BUCKETS; i++) {
             total += dashboard->reviews.rating_counts[i];
-            weighted += dashboard->reviews.rating_counts[i] * (i + 1);
+            weighted += dashboard->reviews.rating_counts[i] * i;  // Rating value equals index
         }
-        double avg = total > 0 ? (double)weighted / total : 2.5;
+        double avg = total > 0 ? (double)weighted / total : 2.0;
         m_averageEaseLabel->setText(QString::number(avg, 'f', 2));
     } else {
-        m_averageEaseLabel->setText("N/A");
+        m_averageEaseLabel->setText(NO_DATA_PLACEHOLDER);
     }
     
     // Update streak
@@ -177,8 +181,8 @@ void AnalyticsScreenWidget::refreshStats()
         
         m_recentActivityTable->setItem(row, 0, new QTableWidgetItem(QString::fromUtf8(date_buf)));
         m_recentActivityTable->setItem(row, 1, new QTableWidgetItem(QString::number(sample->total_reviews)));
-        m_recentActivityTable->setItem(row, 2, new QTableWidgetItem("N/A"));  // Avg ease not in heatmap
-        m_recentActivityTable->setItem(row, 3, new QTableWidgetItem("N/A"));  // Time not tracked yet
+        m_recentActivityTable->setItem(row, 2, new QTableWidgetItem(NO_DATA_PLACEHOLDER));
+        m_recentActivityTable->setItem(row, 3, new QTableWidgetItem(NO_DATA_PLACEHOLDER));
     }
     
     // If no data, show placeholder
