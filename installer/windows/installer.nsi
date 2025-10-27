@@ -95,16 +95,9 @@ ${INSTALL_TYPE}
 SetOverwrite ifnewer
 SetOutPath "$INSTDIR"
 
-; Copy main executable
-File "build\bin\hyperrecall.exe"
-
-; Copy assets directory
-SetOutPath "$INSTDIR\assets"
-File /r "build\bin\assets\*.*"
-
-; Copy runtime dependencies (DLLs from vcpkg)
+; Copy application files and dependencies deployed by windeployqt
 SetOutPath "$INSTDIR"
-File /nonfatal "vcpkg\installed\x64-windows\bin\*.dll"
+File /r "build\bin\*.*"
 
 ; Copy documentation
 File "README.md"
@@ -168,8 +161,15 @@ Delete "$INSTDIR\README.md"
 Delete "$INSTDIR\LICENSE"
 Delete "$INSTDIR\uninstall.exe"
 
-; Remove assets
+; Remove application directories created during installation
 RMDir /r "$INSTDIR\assets"
+RMDir /r "$INSTDIR\platforms"
+RMDir /r "$INSTDIR\styles"
+RMDir /r "$INSTDIR\imageformats"
+RMDir /r "$INSTDIR\iconengines"
+RMDir /r "$INSTDIR\resources"
+RMDir /r "$INSTDIR\translations"
+RMDir /r "$INSTDIR\qml"
 
 ; Remove installation directory if empty
 RMDir "$INSTDIR"
