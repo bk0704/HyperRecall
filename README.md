@@ -10,6 +10,17 @@ Disclaimer: this is the shitty vibecoded version, I do plan on making another ve
 > 
 > **📊 Project Status:** See [PROJECT_COMPLETION_SUMMARY.md](PROJECT_COMPLETION_SUMMARY.md) for complete feature coverage and completion metrics.
 
+## 📥 Download
+
+**Latest Release**: [Download HyperRecall v1.0.0](https://github.com/bk0704/HyperRecall/releases/latest)
+
+### Quick Install
+
+- **Windows**: Download and run `HyperRecall-Setup-*.exe` installer
+- **Linux**: Download `HyperRecall-Linux-x64.tar.gz`, extract, and run `./hyperrecall`
+
+For building from source, see the [Installation Guide](#installation-guide) below.
+
 ## Features
 
 * **Spaced Repetition**: Hybrid "HyperSRS" algorithm combining stability-based mastery and Leitner-style cram modes
@@ -286,6 +297,40 @@ HyperRecall is designed for smooth performance:
 
 MIT License. See `LICENSE` file for details.
 
+## Creating a Release
+
+HyperRecall uses automated GitHub Actions workflows to build and publish releases.
+
+### For Maintainers
+
+To create a new release, simply run:
+
+```bash
+# Linux/macOS
+./create-release.sh 1.0.1
+
+# Windows  
+.\create-release.ps1 1.0.1
+```
+
+This will update the VERSION file, create a git tag, and prepare for release. Then push as instructed.
+
+GitHub Actions will automatically:
+- Build for Windows and Linux
+- Create a Windows installer (.exe)
+- Package Linux as a tarball
+- Create a GitHub release with all artifacts
+
+**For detailed instructions, see [RELEASE_GUIDE.md](RELEASE_GUIDE.md)**
+
+### Release Artifacts
+
+Each release includes:
+- `HyperRecall-Setup-{VERSION}.exe` - Windows installer with automatic dependency bundling
+- `HyperRecall-Linux-x64.tar.gz` - Linux portable binary with assets
+
+For more details, see `installer/README.md`.
+
 ## Documentation
 
 ### Quick Start
@@ -304,6 +349,7 @@ MIT License. See `LICENSE` file for details.
 - **[ROADMAP.md](ROADMAP.md)** - Development status and future plans
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
 - **[ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md)** - Testing status and criteria
+- **[RELEASE_GUIDE.md](RELEASE_GUIDE.md)** - How to create and publish releases
 
 ### Community
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute to the project

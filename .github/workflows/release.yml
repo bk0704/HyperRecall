@@ -1,0 +1,193 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  build-windows:
+    name: Build Windows Release
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone vcpkg
+        run: git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+
+      - name: Bootstrap vcpkg
+        run: .\vcpkg\bootstrap-vcpkg.bat
+        shell: powershell
+
+      - name: Install dependencies
+        run: vcpkg install raylib sqlite3 --triplet x64-windows
+        shell: powershell
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            "-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake"
+        shell: powershell
+
+      - name: Build
+        run: cmake --build build --config Release
+        shell: powershell
+
+      - name: Install NSIS
+        run: |
+          choco install nsis -y
+        shell: powershell
+
+      - name: Get version number
+        id: get_version
+        run: |
+          $version = "${{ github.event.inputs.version || github.ref_name }}"
+          $version = $version -replace '^v', ''
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+        shell: powershell
+
+      - name: Create Windows Installer
+        run: |
+          $env:PATH = "C:\Program Files (x86)\NSIS;$env:PATH"
+          makensis /DVERSION="${{ steps.get_version.outputs.version }}" installer/windows/installer.nsi
+        shell: powershell
+
+      - name: Upload Windows Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: HyperRecall-Windows-Installer
+          path: installer/windows/HyperRecall-Setup-*.exe
+          if-no-files-found: error
+
+      - name: Upload Windows Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: HyperRecall-Windows-Binary
+          path: |
+            build/bin/hyperrecall.exe
+            build/bin/assets/
+            vcpkg/installed/x64-windows/bin/*.dll
+          if-no-files-found: warn
+
+  build-linux:
+    name: Build Linux Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build pkg-config libsqlite3-dev
+          sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
+
+      - name: Build and install raylib
+        run: |
+          git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /tmp/raylib
+          cd /tmp/raylib
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
+          cmake --build build
+          sudo cmake --install build
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Create Linux Tarball
+        run: |
+          mkdir -p HyperRecall-Linux-x64
+          cp build/bin/hyperrecall HyperRecall-Linux-x64/
+          cp -r build/bin/assets HyperRecall-Linux-x64/
+          cp README.md LICENSE HyperRecall-Linux-x64/
+          cp HyperRecall.desktop HyperRecall-Linux-x64/
+          cp install-launcher.sh HyperRecall-Linux-x64/
+          tar -czf HyperRecall-Linux-x64.tar.gz HyperRecall-Linux-x64
+
+      - name: Upload Linux Tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: HyperRecall-Linux-Tarball
+          path: HyperRecall-Linux-x64.tar.gz
+          if-no-files-found: error
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version || github.ref_name }}
+          name: HyperRecall ${{ github.event.inputs.version || github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/HyperRecall-Windows-Installer/HyperRecall-Setup-*.exe
+            artifacts/HyperRecall-Linux-Tarball/HyperRecall-Linux-x64.tar.gz
+          body: |
+            ## HyperRecall Release ${{ github.event.inputs.version || github.ref_name }}
+            
+            ### Downloads
+            
+            - **Windows**: Download `HyperRecall-Setup-*.exe` and run the installer
+            - **Linux**: Download `HyperRecall-Linux-x64.tar.gz`, extract, and run `./hyperrecall`
+            
+            ### What's New
+            
+            See the full changelog below for details.
+            
+            ### Installation
+            
+            #### Windows
+            1. Download the Windows installer (`.exe` file)
+            2. Run the installer
+            3. Launch HyperRecall from the Start Menu
+            
+            #### Linux
+            1. Download the Linux tarball (`.tar.gz` file)
+            2. Extract: `tar -xzf HyperRecall-Linux-x64.tar.gz`
+            3. Run: `cd HyperRecall-Linux-x64 && ./hyperrecall`
+            4. Optional: Run `./install-launcher.sh` for desktop integration
+            
+            ### Requirements
+            
+            - **Windows**: Windows 10 or later (64-bit)
+            - **Linux**: Modern Linux distribution with X11 (64-bit)
+            
+            For more information, see the [README](https://github.com/bk0704/HyperRecall/blob/main/README.md).
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
