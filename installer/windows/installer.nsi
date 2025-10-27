@@ -1,6 +1,10 @@
 ; HyperRecall NSIS Installer Script
 ; This script creates a Windows installer for HyperRecall
 
+!ifndef VERSION
+  !define VERSION "1.0.0"
+!endif
+
 !define APP_NAME "HyperRecall"
 !define COMP_NAME "HyperRecall Project"
 !define WEB_SITE "https://github.com/bk0704/HyperRecall"
@@ -15,7 +19,15 @@
 
 ######################################################################
 
-VIProductVersion "${VERSION}.0"
+; Ensure version has 4 components for VIProductVersion (e.g., 1.0.0.0)
+!searchparse /noerrors "${VERSION}" "" _V1 "." _V2 "." _V3 "." _V4
+!ifndef _V4
+  !define VI_VERSION "${VERSION}.0"
+!else
+  !define VI_VERSION "${VERSION}"
+!endif
+
+VIProductVersion "${VI_VERSION}"
 VIAddVersionKey "ProductName" "${APP_NAME}"
 VIAddVersionKey "CompanyName" "${COMP_NAME}"
 VIAddVersionKey "LegalCopyright" "${COPYRIGHT}"
@@ -27,7 +39,7 @@ VIAddVersionKey "FileVersion" "${VERSION}"
 SetCompressor ZLIB
 Name "${APP_NAME}"
 Caption "${APP_NAME} Installer"
-OutFile "..\..\${INSTALLER_NAME}"
+OutFile "installer\windows\${INSTALLER_NAME}"
 BrandingText "${APP_NAME}"
 XPStyle on
 InstallDirRegKey "${REG_ROOT}" "${REG_APP_PATH}" ""
@@ -84,19 +96,19 @@ SetOverwrite ifnewer
 SetOutPath "$INSTDIR"
 
 ; Copy main executable
-File "..\..\build\bin\hyperrecall.exe"
+File "build\bin\hyperrecall.exe"
 
 ; Copy assets directory
 SetOutPath "$INSTDIR\assets"
-File /r "..\..\build\bin\assets\*.*"
+File /r "build\bin\assets\*.*"
 
 ; Copy runtime dependencies (DLLs from vcpkg)
 SetOutPath "$INSTDIR"
-File /nonfatal "..\..\vcpkg\installed\x64-windows\bin\*.dll"
+File /nonfatal "vcpkg\installed\x64-windows\bin\*.dll"
 
 ; Copy documentation
-File "..\..\README.md"
-File "..\..\LICENSE"
+File "README.md"
+File "LICENSE"
 
 SectionEnd
 

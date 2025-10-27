@@ -47,10 +47,18 @@ jobs:
           choco install nsis -y
         shell: powershell
 
+      - name: Get version number
+        id: get_version
+        run: |
+          $version = "${{ github.event.inputs.version || github.ref_name }}"
+          $version = $version -replace '^v', ''
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+        shell: powershell
+
       - name: Create Windows Installer
         run: |
           $env:PATH = "C:\Program Files (x86)\NSIS;$env:PATH"
-          makensis /DVERSION="${{ github.event.inputs.version || github.ref_name }}" installer/windows/installer.nsi
+          makensis /DVERSION="${{ steps.get_version.outputs.version }}" installer/windows/installer.nsi
         shell: powershell
 
       - name: Upload Windows Installer
