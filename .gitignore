@@ -21,3 +21,8 @@ _codeql_detected_source_root
 *.a
 *.so
 *.dylib
+
+# Installer artifacts
+HyperRecall-Setup-*.exe
+HyperRecall-Linux-*.tar.gz
+installer/windows/*.exe
