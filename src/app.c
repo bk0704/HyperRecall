@@ -1,9 +1,5 @@
 #include "app.h"
 
-#ifndef HYPERRECALL_UI_QT6
-#include <raylib.h>
-#endif
-
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>

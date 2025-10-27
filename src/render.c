@@ -4,15 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef HYPERRECALL_UI_QT6
-#include <raylib.h>
-#endif
-
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
-#ifdef HYPERRECALL_UI_QT6
 // Stub implementations for Qt6 backend
 static inline Font GetFontDefault(void) { return (Font){0}; }
 static inline Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing) {
@@ -37,19 +32,11 @@ static inline void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Col
 static inline void DrawCircleV(Vector2 center, float radius, Color color) {
     (void)center; (void)radius; (void)color;
 }
-#endif
 
 static Font resolve_font(Font candidate)
 {
-#ifdef HYPERRECALL_UI_QT6
     (void)candidate;
     return GetFontDefault();
-#else
-    if (candidate.texture != NULL && ((Texture2D*)candidate.texture)->id != 0) {
-        return candidate;
-    }
-    return GetFontDefault();
-#endif
 }
 
 static float measure_text_range(Font font, const char *text, size_t length, float font_size)

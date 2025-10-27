@@ -1,9 +1,5 @@
 #include "media.h"
 
-#ifndef HYPERRECALL_UI_QT6
-#include <raylib.h>
-#endif
-
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -11,7 +7,6 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef HYPERRECALL_UI_QT6
 // Stub implementations for Qt6 backend
 static inline double GetTime(void) { 
     return (double)time(NULL);
@@ -77,7 +72,6 @@ static inline Wave LoadWaveFromMemory(const char *fileType, const unsigned char 
 static inline void UnloadWave(Wave wave) {
     (void)wave;
 }
-#endif
 
 #define HR_MEDIA_DEFAULT_TEXTURE_BUDGET (256ULL * 1024ULL * 1024ULL)
 #define HR_MEDIA_DEFAULT_AUDIO_BUDGET (128ULL * 1024ULL * 1024ULL)

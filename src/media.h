@@ -17,10 +17,6 @@ extern "C" {
 #include "types.h"
 #include "model.h"
 
-#ifndef HYPERRECALL_UI_QT6
-#include <raylib.h>
-#endif
-
 /** Maximum number of characters persisted for media UUIDs. */
 #define HR_MEDIA_MAX_UUID 64U
 /** Maximum number of characters persisted for source paths. */
