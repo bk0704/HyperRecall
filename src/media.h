@@ -10,12 +10,11 @@ extern "C" {
  * @brief Media cache and cross-platform resource loading helpers.
  */
 
-#include <raylib.h>
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#include "types.h"
 #include "model.h"
 
 /** Maximum number of characters persisted for media UUIDs. */

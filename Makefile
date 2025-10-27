@@ -44,11 +44,11 @@ clean:
 install-deps:
 	@echo "📦 Installing dependencies (Ubuntu/Debian)..."
 	@if command -v apt >/dev/null 2>&1; then \
-		sudo apt update && sudo apt install -y build-essential cmake ninja-build pkg-config libsqlite3-dev libraylib-dev; \
+		sudo apt update && sudo apt install -y build-essential cmake ninja-build pkg-config libsqlite3-dev qt6-base-dev; \
 	elif command -v dnf >/dev/null 2>&1; then \
-		sudo dnf install -y @development-tools cmake ninja-build pkgconf-pkg-config sqlite-devel raylib-devel; \
+		sudo dnf install -y @development-tools cmake ninja-build pkgconf-pkg-config sqlite-devel qt6-qtbase-devel; \
 	elif command -v pacman >/dev/null 2>&1; then \
-		sudo pacman -Sy --needed base-devel cmake ninja sqlite raylib; \
+		sudo pacman -Sy --needed base-devel cmake ninja sqlite qt6-base; \
 	else \
 		echo "❌ Unsupported package manager. Please install dependencies manually."; \
 		exit 1; \

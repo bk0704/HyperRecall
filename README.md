@@ -2,7 +2,7 @@
 
 **Status**: ✅ Production-Ready | 100% Feature Complete | v1.0.0
 
-HyperRecall is a desktop spaced repetition study application built with C17, raylib 5.x (or Qt6), raygui, and SQLite3. It provides a fast, focused study workflow with deep analytics and a modern native UI.
+HyperRecall is a desktop spaced repetition study application built with C17, Qt6, and SQLite3. It provides a fast, focused study workflow with deep analytics and a modern native desktop UI.
 
 Disclaimer: this is the shitty vibecoded version, I do plan on making another version soon
 
@@ -30,8 +30,8 @@ For building from source, see the [Installation Guide](#installation-guide) belo
 * **Analytics Dashboard**: Track progress with heatmaps, trends, and performance metrics
 * **Import/Export**: JSON and CSV formats for deck sharing and backup
 * **Themeable UI**: Modern Dark theme with customizable palettes (Neon Dark, Solar Dawn)
-* **Dual UI Backends**: Choose between Raylib (default) or Qt6 for the user interface
-* **Cross-Platform**: Builds on Linux and Windows (MinGW)
+* **Native Qt6 Desktop UI**: Professional desktop interface with native widgets
+* **Cross-Platform**: Builds on Linux and Windows
 
 ## 🚀 One-Click Quick Start
 
@@ -68,11 +68,11 @@ For a desktop launcher (Linux):
 
 HyperRecall requires the following dependencies:
 
-* **raylib 5.x** — Graphics, input, and audio runtime
+* **Qt6** — Desktop UI framework (Widgets, Gui, Core modules)
 * **SQLite3** — Database for persistent storage
 * **CMake 3.21+** — Build system
 * **Ninja or Make** — Build tool
-* **C17 compiler** — GCC, Clang, or MSVC
+* **C17/C++17 compiler** — GCC, Clang, or MSVC
 
 ### Installing Dependencies
 
@@ -83,18 +83,10 @@ make install-deps
 
 # Or manually:
 sudo apt update
-sudo apt install -y build-essential cmake ninja-build pkg-config libsqlite3-dev
-sudo apt install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
-
-# Install raylib (if not available via package manager)
-git clone --depth 1 --branch 5.0 https://github.com/raysan5/raylib.git /tmp/raylib
-cd /tmp/raylib
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local
-cmake --build build
-sudo cmake --install build
+sudo apt install -y build-essential cmake ninja-build pkg-config libsqlite3-dev qt6-base-dev
 ```
 
-#### Manual Build (if you prefer)
+#### Manual Build
 ```bash
 # Configure
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -106,34 +98,14 @@ cmake --build build
 ./build/bin/hyperrecall
 ```
 
-#### Building with Qt6 Backend (Optional)
-
-HyperRecall supports an alternative Qt6 UI backend for a more native desktop experience:
-
-```bash
-# Install Qt6 dependencies (Ubuntu/Debian example)
-sudo apt install -y qt6-base-dev
-
-# Configure with Qt6 backend
-cmake -S . -B build-qt -G Ninja \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DHYPERRECALL_UI_BACKEND=QT6
-
-# Build
-cmake --build build-qt
-
-# Run
-./build-qt/bin/hyperrecall
-```
-
-See [INSTALL.md](INSTALL.md) for detailed Qt6 installation instructions on all platforms.
+See [INSTALL.md](INSTALL.md) for detailed installation instructions on all platforms.
 
 #### Windows
 ```powershell
 # Install dependencies with vcpkg
 git clone https://github.com/microsoft/vcpkg.git
 .\vcpkg\bootstrap-vcpkg.bat
-.\vcpkg\vcpkg install raylib sqlite3 --triplet x64-windows
+.\vcpkg\vcpkg install qt6 sqlite3 --triplet x64-windows
 
 # Then just run (will auto-configure and build):
 .\run.ps1
@@ -153,29 +125,29 @@ HyperRecall/
 │   ├── fonts/          # UI and code fonts (Inter, JetBrains Mono)
 │   ├── icons/          # PNG icons for UI elements
 │   └── themes.json     # Theme palette definitions
-├── external/           # Vendored dependencies
-│   └── raygui/         # raygui single-header library
 ├── src/                # Application source code
 │   ├── app.*           # Application lifecycle and main loop
 │   ├── db.*            # SQLite database layer
 │   ├── model.*         # Domain models (cards, topics)
 │   ├── srs.*           # Spaced repetition scheduling
 │   ├── sessions.*      # Study session management
-│   ├── ui.*            # Main UI rendering and interaction (raylib/Qt abstraction)
+│   ├── ui.*            # UI abstraction layer
 │   ├── theme.*         # Theme palette management
-│   ├── render.*        # Rich text and media rendering
-│   ├── media.*         # Media asset handling
-│   ├── platform.*      # Platform-specific utilities (raylib/Qt abstraction)
+│   ├── render.*        # Rich text and media rendering (stub functions)
+│   ├── media.*         # Media asset handling (stub functions)
+│   ├── platform.*      # Platform abstraction layer
 │   ├── cfg.*           # Configuration management
 │   ├── analytics.*     # Analytics tracking and export
 │   ├── import_export.* # JSON/CSV import/export
 │   ├── json.*          # Minimal JSON parser/serializer
-│   ├── main.c          # Entry point (raylib backend)
 │   ├── main_qt.cpp     # Entry point (Qt6 backend)
 │   └── qt/             # Qt6-specific implementation
 │       ├── qt_platform.* # Qt platform abstraction
 │       ├── qt_ui.*       # Qt UI implementation
-│       └── main_window.* # Qt main window
+│       ├── main_window.* # Qt main window
+│       ├── study_screen.* # Study session screen
+│       ├── library_screen.* # Library management screen
+│       └── analytics_screen.* # Analytics dashboard screen
 ├── CMakeLists.txt      # Build configuration
 ├── LICENSE             # MIT License
 └── README.md           # This file
@@ -233,7 +205,6 @@ The application gracefully handles missing fonts and icons by falling back to de
 ### Build Options
 
 * `HYPERRECALL_ENABLE_DEVTOOLS` (default: ON) - Enable developer overlays and diagnostics
-* `HYPERRECALL_USE_SYSTEM_RAYGUI` (default: OFF) - Use system-provided raygui instead of bundled version
 
 ### Code Style
 

@@ -5,7 +5,17 @@
 #include <QHBoxLayout>
 #include <QGroupBox>
 #include <QTableWidget>
+#include <QTableWidgetItem>
 #include <QHeaderView>
+#include <QString>
+#include <ctime>
+
+extern "C" {
+#include "../analytics.h"
+}
+
+// Constants
+static const char* NO_DATA_PLACEHOLDER = "N/A";
 
 AnalyticsScreenWidget::AnalyticsScreenWidget(QWidget *parent)
     : QWidget(parent)
@@ -112,6 +122,74 @@ void AnalyticsScreenWidget::update()
 
 void AnalyticsScreenWidget::refreshStats()
 {
-    // TODO: Pull actual data from m_analytics
-    // For prototype, using placeholder values
+    if (!m_analytics) {
+        // Show placeholder data
+        m_totalReviewsLabel->setText("142");
+        m_averageEaseLabel->setText("2.5");
+        m_streakLabel->setText("7 days");
+        return;
+    }
+    
+    // Get dashboard data
+    const HrAnalyticsDashboard *dashboard = analytics_dashboard(m_analytics);
+    if (!dashboard) {
+        return;
+    }
+    
+    // Update total reviews
+    m_totalReviewsLabel->setText(QString::number(dashboard->reviews.total_reviews));
+    
+    // Update average ease (calculated from review data)
+    if (dashboard->reviews.total_reviews > 0) {
+        // Calculate weighted average from rating distribution
+        // Ratings: FAIL=0, HARD=1, GOOD=2, EASY=3, CRAM=4
+        size_t total = 0;
+        size_t weighted = 0;
+        for (size_t i = 0; i < HR_ANALYTICS_RATING_BUCKETS; i++) {
+            total += dashboard->reviews.rating_counts[i];
+            weighted += dashboard->reviews.rating_counts[i] * i;  // Rating value equals index
+        }
+        double avg = total > 0 ? (double)weighted / total : 2.0;
+        m_averageEaseLabel->setText(QString::number(avg, 'f', 2));
+    } else {
+        m_averageEaseLabel->setText(NO_DATA_PLACEHOLDER);
+    }
+    
+    // Update streak
+    if (dashboard->streaks.current_streak > 0) {
+        m_streakLabel->setText(QString("%1 days").arg(dashboard->streaks.current_streak));
+    } else {
+        m_streakLabel->setText("0 days");
+    }
+    
+    // Update recent activity table with heatmap data
+    m_recentActivityTable->setRowCount(0);
+    
+    // Show last 10 days from heatmap
+    size_t rows = dashboard->heatmap_count > 10 ? 10 : dashboard->heatmap_count;
+    for (size_t i = 0; i < rows; i++) {
+        int row = m_recentActivityTable->rowCount();
+        m_recentActivityTable->insertRow(row);
+        
+        const HrAnalyticsHeatmapSample *sample = &dashboard->heatmap[dashboard->heatmap_count - rows + i];
+        
+        // Format date
+        time_t day = sample->day_start_utc;
+        struct tm *tm_info = localtime(&day);
+        char date_buf[32];
+        strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", tm_info);
+        
+        m_recentActivityTable->setItem(row, 0, new QTableWidgetItem(QString::fromUtf8(date_buf)));
+        m_recentActivityTable->setItem(row, 1, new QTableWidgetItem(QString::number(sample->total_reviews)));
+        m_recentActivityTable->setItem(row, 2, new QTableWidgetItem(NO_DATA_PLACEHOLDER));
+        m_recentActivityTable->setItem(row, 3, new QTableWidgetItem(NO_DATA_PLACEHOLDER));
+    }
+    
+    // If no data, show placeholder
+    if (m_recentActivityTable->rowCount() == 0) {
+        m_recentActivityTable->insertRow(0);
+        auto *item = new QTableWidgetItem("(No review data yet - start studying!)");
+        item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
+        m_recentActivityTable->setItem(0, 0, item);
+    }
 }

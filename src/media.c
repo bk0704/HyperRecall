@@ -1,12 +1,77 @@
 #include "media.h"
 
-#include <raylib.h>
-
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+// Stub implementations for Qt6 backend
+static inline double GetTime(void) { 
+    return (double)time(NULL);
+}
+static inline const char* GetFileExtension(const char *fileName) {
+    if (fileName == NULL) return "";
+    const char *dot = strrchr(fileName, '.');
+    return (dot == NULL) ? "" : dot;
+}
+static inline bool IsAudioDeviceReady(void) {
+    return false;
+}
+static inline void InitAudioDevice(void) {
+    // No-op for Qt6
+}
+static inline Texture2D LoadTexture(const char *fileName) {
+    (void)fileName;
+    return (Texture2D){0, 0, 0, 0, 0};
+}
+static inline Texture2D LoadTextureFromImage(Image image) {
+    (void)image;
+    return (Texture2D){0, 0, 0, 0, 0};
+}
+static inline void UnloadTexture(Texture2D texture) {
+    (void)texture;
+}
+static inline Image LoadImage(const char *fileName) {
+    (void)fileName;
+    return (Image){NULL, 0, 0, 0, 0};
+}
+static inline Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize) {
+    (void)fileType; (void)fileData; (void)dataSize;
+    return (Image){NULL, 0, 0, 0, 0};
+}
+static inline void UnloadImage(Image image) {
+    (void)image;
+}
+static inline void ImageResize(Image *image, int newWidth, int newHeight) {
+    (void)image; (void)newWidth; (void)newHeight;
+}
+static inline void ImageFormat(Image *image, int newFormat) {
+    (void)image; (void)newFormat;
+}
+static inline Sound LoadSound(const char *fileName) {
+    (void)fileName;
+    return (Sound){NULL, 0};
+}
+static inline Sound LoadSoundFromWave(Wave wave) {
+    (void)wave;
+    return (Sound){NULL, 0};
+}
+static inline void UnloadSound(Sound sound) {
+    (void)sound;
+}
+static inline Wave LoadWave(const char *fileName) {
+    (void)fileName;
+    return (Wave){NULL, 0, 0, 0, 0};
+}
+static inline Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int dataSize) {
+    (void)fileType; (void)fileData; (void)dataSize;
+    return (Wave){NULL, 0, 0, 0, 0};
+}
+static inline void UnloadWave(Wave wave) {
+    (void)wave;
+}
 
 #define HR_MEDIA_DEFAULT_TEXTURE_BUDGET (256ULL * 1024ULL * 1024ULL)
 #define HR_MEDIA_DEFAULT_AUDIO_BUDGET (128ULL * 1024ULL * 1024ULL)
