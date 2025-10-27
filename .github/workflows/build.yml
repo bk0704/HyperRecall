@@ -33,6 +33,10 @@ jobs:
         if: runner.os == 'Windows'
         run: git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
 
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Bootstrap vcpkg (Windows)
         if: runner.os == 'Windows'
         run: .\vcpkg\bootstrap-vcpkg.bat

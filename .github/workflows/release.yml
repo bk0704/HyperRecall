@@ -25,6 +25,9 @@ jobs:
       - name: Clone vcpkg
         run: git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
 
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Bootstrap vcpkg
         run: .\vcpkg\bootstrap-vcpkg.bat
         shell: powershell
