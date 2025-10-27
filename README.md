@@ -303,21 +303,25 @@ HyperRecall uses automated GitHub Actions workflows to build and publish release
 
 ### For Maintainers
 
-To create a new release:
+To create a new release, simply run:
 
-1. **Update the VERSION file** with the new version number (e.g., `1.0.1`)
-2. **Create and push a git tag**:
-   ```bash
-   git tag v1.0.1
-   git push origin v1.0.1
-   ```
-3. **GitHub Actions will automatically**:
-   - Build for Windows and Linux
-   - Create a Windows installer (.exe)
-   - Package Linux as a tarball
-   - Create a GitHub release with all artifacts
+```bash
+# Linux/macOS
+./create-release.sh 1.0.1
 
-Alternatively, manually trigger the release workflow from the Actions tab.
+# Windows  
+.\create-release.ps1 1.0.1
+```
+
+This will update the VERSION file, create a git tag, and prepare for release. Then push as instructed.
+
+GitHub Actions will automatically:
+- Build for Windows and Linux
+- Create a Windows installer (.exe)
+- Package Linux as a tarball
+- Create a GitHub release with all artifacts
+
+**For detailed instructions, see [RELEASE_GUIDE.md](RELEASE_GUIDE.md)**
 
 ### Release Artifacts
 
@@ -345,6 +349,7 @@ For more details, see `installer/README.md`.
 - **[ROADMAP.md](ROADMAP.md)** - Development status and future plans
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
 - **[ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md)** - Testing status and criteria
+- **[RELEASE_GUIDE.md](RELEASE_GUIDE.md)** - How to create and publish releases
 
 ### Community
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute to the project
