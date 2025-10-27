@@ -33,7 +33,7 @@
 #ifdef HYPERRECALL_UI_QT6
 #define RED ((Color){230, 41, 55, 255})
 #define GREEN ((Color){0, 228, 48, 255})
-#define RAYWHITE ((Color){245, 245, 245, 255})
+// RAYWHITE already defined in types.h
 #endif
 
 #ifndef PATH_MAX

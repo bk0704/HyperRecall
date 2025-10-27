@@ -4,16 +4,52 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef HYPERRECALL_UI_QT6
+#include <raylib.h>
+#endif
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
+#ifdef HYPERRECALL_UI_QT6
+// Stub implementations for Qt6 backend
+static inline Font GetFontDefault(void) { return (Font){0}; }
+static inline Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing) {
+    (void)font; (void)text; (void)fontSize; (void)spacing;
+    return (Vector2){0, 0};
+}
+static inline void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint) {
+    (void)font; (void)text; (void)position; (void)fontSize; (void)spacing; (void)tint;
+}
+static inline void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color color) {
+    (void)rec; (void)roundness; (void)segments; (void)color;
+}
+static inline void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, float lineThick, Color color) {
+    (void)rec; (void)roundness; (void)segments; (void)lineThick; (void)color;
+}
+static inline void DrawTriangleFan(Vector2 *points, int pointCount, Color color) {
+    (void)points; (void)pointCount; (void)color;
+}
+static inline void DrawLineEx(Vector2 startPos, Vector2 endPos, float thick, Color color) {
+    (void)startPos; (void)endPos; (void)thick; (void)color;
+}
+static inline void DrawCircleV(Vector2 center, float radius, Color color) {
+    (void)center; (void)radius; (void)color;
+}
+#endif
+
 static Font resolve_font(Font candidate)
 {
-    if (candidate.texture.id != 0) {
+#ifdef HYPERRECALL_UI_QT6
+    (void)candidate;
+    return GetFontDefault();
+#else
+    if (candidate.texture != NULL && ((Texture2D*)candidate.texture)->id != 0) {
         return candidate;
     }
     return GetFontDefault();
+#endif
 }
 
 static float measure_text_range(Font font, const char *text, size_t length, float font_size)

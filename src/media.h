@@ -10,13 +10,16 @@ extern "C" {
  * @brief Media cache and cross-platform resource loading helpers.
  */
 
-#include <raylib.h>
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#include "types.h"
 #include "model.h"
+
+#ifndef HYPERRECALL_UI_QT6
+#include <raylib.h>
+#endif
 
 /** Maximum number of characters persisted for media UUIDs. */
 #define HR_MEDIA_MAX_UUID 64U

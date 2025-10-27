@@ -15,6 +15,7 @@
 extern "C" {
 #include "../app.h"
 #include "../platform.h"
+#include "../analytics.h"
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -209,7 +210,7 @@ void MainWindow::processFrame()
     }
 
     // Process application frame
-    HrPlatformFrame frame_info = {0};
+    HrPlatformFrame frame_info = {};
     
     if (platform_begin_frame(m_app->platform, &frame_info)) {
         // Update status bar with frame info

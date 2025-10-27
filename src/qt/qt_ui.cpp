@@ -144,7 +144,7 @@ void QtUiContext::setFonts(const HrRenderFontSet * /* fonts */, float /* base_fo
 const HrThemePalette *QtUiContext::activePalette() const
 {
     if (m_themes != nullptr) {
-        return theme_manager_active_palette(m_themes);
+        return theme_manager_active(m_themes);
     }
     return nullptr;
 }

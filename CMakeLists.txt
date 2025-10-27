@@ -165,6 +165,9 @@ if(HYPERRECALL_USE_QT6)
         src/qt/study_screen.h
         src/qt/analytics_screen.h
         src/qt/library_screen.h)
+    
+    # Enable Qt's automoc for processing Q_OBJECT macros
+    set(CMAKE_AUTOMOC ON)
 else()
     set(HYPERRECALL_BACKEND_SOURCES
         src/main.c

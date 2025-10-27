@@ -95,8 +95,14 @@ void QtPlatformHandle::onFrameTimeout()
 // C API implementation
 extern "C" {
 
+// Define the opaque platform handle structure
+struct PlatformHandle {
+    QtPlatformHandle *qtHandle;
+};
+
 struct PlatformHandle *platform_create(const HrPlatformConfig *config)
 {
+    (void)config; // Unused for now
     // Note: The actual window creation is handled by MainWindow
     // This function just creates the platform handle wrapper
     // The window will be attached later by main_qt.cpp
