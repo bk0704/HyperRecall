@@ -2,6 +2,21 @@
 
 This guide provides comprehensive installation instructions for HyperRecall on different platforms.
 
+## Recommended: Download Prebuilt Release
+
+The easiest way to install HyperRecall is to download a prebuilt release:
+
+**[Download Latest Release](https://github.com/bk0704/HyperRecall/releases/latest)**
+
+- **Windows**: Download `HyperRecall-Setup-*.exe` and run the installer
+- **Linux**: Download `HyperRecall-Linux-x64.tar.gz`, extract with `tar -xzf`, and run `./hyperrecall`
+
+---
+
+## Building from Source
+
+If you prefer to build from source or need to customize the build, continue below.
+
 ## Quick Install
 
 The fastest way to get started is to use the one-click scripts:

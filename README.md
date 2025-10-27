@@ -10,6 +10,17 @@ Disclaimer: this is the shitty vibecoded version, I do plan on making another ve
 > 
 > **📊 Project Status:** See [PROJECT_COMPLETION_SUMMARY.md](PROJECT_COMPLETION_SUMMARY.md) for complete feature coverage and completion metrics.
 
+## 📥 Download
+
+**Latest Release**: [Download HyperRecall v1.0.0](https://github.com/bk0704/HyperRecall/releases/latest)
+
+### Quick Install
+
+- **Windows**: Download and run `HyperRecall-Setup-*.exe` installer
+- **Linux**: Download `HyperRecall-Linux-x64.tar.gz`, extract, and run `./hyperrecall`
+
+For building from source, see the [Installation Guide](#installation-guide) below.
+
 ## Features
 
 * **Spaced Repetition**: Hybrid "HyperSRS" algorithm combining stability-based mastery and Leitner-style cram modes
@@ -285,6 +296,36 @@ HyperRecall is designed for smooth performance:
 ## License
 
 MIT License. See `LICENSE` file for details.
+
+## Creating a Release
+
+HyperRecall uses automated GitHub Actions workflows to build and publish releases.
+
+### For Maintainers
+
+To create a new release:
+
+1. **Update the VERSION file** with the new version number (e.g., `1.0.1`)
+2. **Create and push a git tag**:
+   ```bash
+   git tag v1.0.1
+   git push origin v1.0.1
+   ```
+3. **GitHub Actions will automatically**:
+   - Build for Windows and Linux
+   - Create a Windows installer (.exe)
+   - Package Linux as a tarball
+   - Create a GitHub release with all artifacts
+
+Alternatively, manually trigger the release workflow from the Actions tab.
+
+### Release Artifacts
+
+Each release includes:
+- `HyperRecall-Setup-{VERSION}.exe` - Windows installer with automatic dependency bundling
+- `HyperRecall-Linux-x64.tar.gz` - Linux portable binary with assets
+
+For more details, see `installer/README.md`.
 
 ## Documentation
 
