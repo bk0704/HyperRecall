@@ -6,6 +6,11 @@
 #include <QHBoxLayout>
 #include <QTextEdit>
 #include <QStackedWidget>
+#include <QString>
+
+extern "C" {
+#include "../srs.h"
+}
 
 StudyScreenWidget::StudyScreenWidget(QWidget *parent)
     : QWidget(parent)
@@ -158,42 +163,134 @@ void StudyScreenWidget::setSessionManager(struct SessionManager *sessions)
 
 void StudyScreenWidget::update()
 {
-    // TODO: Sync with actual session state
+    if (!m_sessions) {
+        return;
+    }
+    
+    // Check if there's an active session
+    const SessionCard *current = session_manager_current(m_sessions);
+    if (current != nullptr) {
+        // Update UI to show current card
+        size_t remaining = session_manager_remaining(m_sessions);
+        m_statusLabel->setText(
+            QString("Study Session Active - Card %1 of %2")
+                .arg(1)  // Position would need tracking
+                .arg(remaining)
+        );
+        
+        // Display card content (for now, just show the card ID)
+        m_cardDisplay->setPlainText(
+            QString("Card ID: %1\n\n"
+                   "Ease: %2\n"
+                   "Interval: %3 days\n"
+                   "Mode: %4")
+                .arg(current->card_id)
+                .arg(current->state.ease_factor, 0, 'f', 2)
+                .arg(current->state.interval_days)
+                .arg(current->state.mode == SRS_MODE_MASTERY ? "Mastery" : "Cram")
+        );
+        
+        showCardReview();
+    } else {
+        showWelcomeScreen();
+    }
 }
 
 void StudyScreenWidget::onStartMasterySession()
 {
-    // TODO: Actually start a mastery session via m_sessions
-    showCardReview();
+    if (!m_sessions) {
+        showCardReview();  // Show placeholder for now
+        return;
+    }
+    
+    // TODO: Get cards from database
+    // For now, start an empty session to test the flow
+    bool started = session_manager_begin(m_sessions, SESSION_MODE_MASTERY, nullptr, 0);
+    if (started) {
+        update();
+    } else {
+        showCardReview();  // Fallback to placeholder
+    }
 }
 
 void StudyScreenWidget::onStartCramSession()
 {
-    // TODO: Actually start a cram session via m_sessions
-    showCardReview();
+    if (!m_sessions) {
+        showCardReview();  // Show placeholder for now
+        return;
+    }
+    
+    // TODO: Get cards from database  
+    // For now, start an empty session to test the flow
+    bool started = session_manager_begin(m_sessions, SESSION_MODE_CRAM, nullptr, 0);
+    if (started) {
+        update();
+    } else {
+        showCardReview();  // Fallback to placeholder
+    }
 }
 
 void StudyScreenWidget::onAnswerEasy()
 {
-    // TODO: Submit response to session manager
-    // For prototype, just simulate
-    m_cardDisplay->setPlainText("Next card would appear here...");
+    if (!m_sessions) {
+        m_cardDisplay->setPlainText("Next card would appear here...");
+        return;
+    }
+    
+    SRSReviewResult result;
+    bool graded = session_manager_grade(m_sessions, SRS_RESPONSE_EASY, nullptr, &result);
+    if (graded) {
+        update();
+    } else {
+        // Session complete
+        showSessionComplete();
+    }
 }
 
 void StudyScreenWidget::onAnswerGood()
 {
-    // TODO: Submit response to session manager
-    m_cardDisplay->setPlainText("Next card would appear here...");
+    if (!m_sessions) {
+        m_cardDisplay->setPlainText("Next card would appear here...");
+        return;
+    }
+    
+    SRSReviewResult result;
+    bool graded = session_manager_grade(m_sessions, SRS_RESPONSE_GOOD, nullptr, &result);
+    if (graded) {
+        update();
+    } else {
+        showSessionComplete();
+    }
 }
 
 void StudyScreenWidget::onAnswerHard()
 {
-    // TODO: Submit response to session manager
-    m_cardDisplay->setPlainText("Next card would appear here...");
+    if (!m_sessions) {
+        m_cardDisplay->setPlainText("Next card would appear here...");
+        return;
+    }
+    
+    SRSReviewResult result;
+    bool graded = session_manager_grade(m_sessions, SRS_RESPONSE_HARD, nullptr, &result);
+    if (graded) {
+        update();
+    } else {
+        showSessionComplete();
+    }
 }
 
 void StudyScreenWidget::onAnswerAgain()
 {
-    // TODO: Submit response to session manager
-    m_cardDisplay->setPlainText("Card will be shown again soon...");
+    if (!m_sessions) {
+        m_cardDisplay->setPlainText("Card will be shown again soon...");
+        return;
+    }
+    
+    SRSReviewResult result;
+    bool graded = session_manager_grade(m_sessions, SRS_RESPONSE_FAIL, nullptr, &result);
+    if (graded) {
+        update();
+    } else {
+        showSessionComplete();
+    }
 }
