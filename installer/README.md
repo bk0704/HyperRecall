@@ -50,7 +50,28 @@ The tarball is created automatically by the release workflow.
 
 ## Creating a New Release
 
-### Method 1: Git Tag (Recommended)
+### Quick Method: Use the Release Script
+
+The easiest way to create a release:
+
+**Linux/macOS:**
+```bash
+./create-release.sh 1.0.1
+```
+
+**Windows:**
+```powershell
+.\create-release.ps1 1.0.1
+```
+
+These scripts will:
+1. Update the VERSION file
+2. Create a git tag
+3. Show you the commands to push
+
+Then just push as instructed, and the automated workflow will handle the rest!
+
+### Method 1: Git Tag (Manual)
 
 ```bash
 # Create and push a new version tag
