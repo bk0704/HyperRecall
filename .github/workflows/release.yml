@@ -44,6 +44,12 @@ jobs:
         run: cmake --build build --config Release
         shell: powershell
 
+      - name: Bundle Qt plugins
+        run: |
+          New-Item -ItemType Directory -Path build/bin/platforms -Force | Out-Null
+          Copy-Item -Path vcpkg/installed/x64-windows/plugins/platforms/* -Destination build/bin/platforms/ -Recurse -Force
+        shell: powershell
+
       - name: Install NSIS
         run: |
           choco install nsis -y
@@ -77,6 +83,7 @@ jobs:
           path: |
             build/bin/hyperrecall.exe
             build/bin/assets/
+            build/bin/platforms/
             vcpkg/installed/x64-windows/bin/*.dll
           if-no-files-found: warn
 

@@ -102,6 +102,10 @@ File "build\bin\hyperrecall.exe"
 SetOutPath "$INSTDIR\assets"
 File /r "build\bin\assets\*.*"
 
+; Copy Qt platform plugins
+SetOutPath "$INSTDIR\platforms"
+File /r "build\bin\platforms\*.*"
+
 ; Copy runtime dependencies (DLLs from vcpkg)
 SetOutPath "$INSTDIR"
 File /nonfatal "vcpkg\installed\x64-windows\bin\*.dll"
@@ -170,6 +174,9 @@ Delete "$INSTDIR\uninstall.exe"
 
 ; Remove assets
 RMDir /r "$INSTDIR\assets"
+
+; Remove Qt plugins
+RMDir /r "$INSTDIR\platforms"
 
 ; Remove installation directory if empty
 RMDir "$INSTDIR"
