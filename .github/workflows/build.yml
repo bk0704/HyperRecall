@@ -29,22 +29,43 @@ jobs:
           sudo apt-get install -y build-essential cmake ninja-build pkg-config libsqlite3-dev
           sudo apt-get install -y qt6-base-dev qt6-base-dev-tools
 
-      - name: Clone vcpkg (Windows)
-        if: runner.os == 'Windows'
-        run: git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
-
       - name: Setup MSVC (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Cache vcpkg (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/vcpkg
+            !${{ github.workspace }}/vcpkg/buildtrees
+            !${{ github.workspace }}/vcpkg/packages
+            !${{ github.workspace }}/vcpkg/downloads
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('**/vcpkg.json', '.git/modules/vcpkg/HEAD') }}-v1
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Clone vcpkg (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          if (!(Test-Path vcpkg)) {
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+          }
+        shell: powershell
+
       - name: Bootstrap vcpkg (Windows)
         if: runner.os == 'Windows'
-        run: .\vcpkg\bootstrap-vcpkg.bat
+        run: |
+          if (!(Test-Path vcpkg\vcpkg.exe)) {
+            .\vcpkg\bootstrap-vcpkg.bat
+          }
         shell: powershell
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
-        run: vcpkg install qtbase sqlite3 --triplet x64-windows
+        run: |
+          .\vcpkg\vcpkg.exe install qtbase[core,widgets,gui,network,sql] sqlite3 --triplet x64-windows
         shell: powershell
 
       - name: Configure (Linux)
@@ -59,7 +80,8 @@ jobs:
         run: |
           cmake -S . -B "build/${{ matrix.build_type }}" -G Ninja `
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
-            "-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake"
+            "-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows
         shell: powershell
 
       - name: Build
