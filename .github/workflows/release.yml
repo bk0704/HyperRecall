@@ -22,22 +22,47 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/vcpkg
+            !${{ github.workspace }}/vcpkg/buildtrees
+            !${{ github.workspace }}/vcpkg/packages
+            !${{ github.workspace }}/vcpkg/downloads
+          key: vcpkg-${{ runner.os }}-release-${{ hashFiles('**/vcpkg.json', '.git/modules/vcpkg/HEAD') }}-v1
+          restore-keys: |
+            vcpkg-${{ runner.os }}-release-
+            vcpkg-${{ runner.os }}-
+
       - name: Clone vcpkg
-        run: git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+        run: |
+          if (!(Test-Path vcpkg)) {
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+          }
+        shell: powershell
 
       - name: Bootstrap vcpkg
-        run: .\vcpkg\bootstrap-vcpkg.bat
+        run: |
+          if (!(Test-Path vcpkg\vcpkg.exe)) {
+            .\vcpkg\bootstrap-vcpkg.bat
+          }
         shell: powershell
 
       - name: Install dependencies
-        run: vcpkg install qt6-base sqlite3 --triplet x64-windows
+        run: |
+          .\vcpkg\vcpkg.exe install qtbase[core,widgets,gui,network,sql] sqlite3 --triplet x64-windows
         shell: powershell
 
       - name: Configure
         run: |
           cmake -S . -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
-            "-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake"
+            "-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows
         shell: powershell
 
       - name: Build

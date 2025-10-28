@@ -14,6 +14,10 @@
 
 #if defined(_WIN32)
 #include <direct.h>
+// Define S_ISDIR for Windows (MSVC doesn't provide it)
+#ifndef S_ISDIR
+#define S_ISDIR(m) (((m) & _S_IFMT) == _S_IFDIR)
+#endif
 #endif
 
 #include "analytics.h"
