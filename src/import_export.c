@@ -18,6 +18,15 @@
 #define PATH_MAX 4096
 #endif
 
+#if defined(_WIN32)
+static char *hr_strtok_r(char *str, const char *delim, char **context)
+{
+    return strtok_s(str, delim, context);
+}
+
+#define strtok_r(str, delim, saveptr) hr_strtok_r((str), (delim), (saveptr))
+#endif
+
 /* Forward declarations for helper functions */
 static HrJsonValue *serialize_card_to_json(const HrCard *card, bool include_srs_state);
 static HrJsonValue *serialize_topic_to_json(const HrTopic *topic);
