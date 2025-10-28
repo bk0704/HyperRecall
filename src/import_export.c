@@ -18,6 +18,18 @@
 #define PATH_MAX 4096
 #endif
 
+#if defined(_WIN32)
+static char *hr_strtok(char *str, const char *delim, char **context)
+{
+    return strtok_s(str, delim, context);
+}
+#else
+static char *hr_strtok(char *str, const char *delim, char **saveptr)
+{
+    return strtok_r(str, delim, saveptr);
+}
+#endif
+
 /* Forward declarations for helper functions */
 static HrJsonValue *serialize_card_to_json(const HrCard *card, bool include_srs_state);
 static HrJsonValue *serialize_topic_to_json(const HrTopic *topic);
@@ -686,14 +698,14 @@ bool hr_import_csv(struct DatabaseHandle *db, const char *input_path, HrImportRe
         /* Format: id,topic_id,prompt,response,mnemonic,created_at,due_at */
         
         char *saveptr = NULL;
-        char *id_str = strtok_r(line, ",", &saveptr);
+        char *id_str = hr_strtok(line, ",", &saveptr);
         (void)id_str; /* Unused - we generate new IDs on import */
-        char *topic_id_str = strtok_r(NULL, ",", &saveptr);
-        char *prompt = strtok_r(NULL, ",", &saveptr);
-        char *response = strtok_r(NULL, ",", &saveptr);
-        char *mnemonic = strtok_r(NULL, ",", &saveptr);
-        char *created_at_str = strtok_r(NULL, ",", &saveptr);
-        char *due_at_str = strtok_r(NULL, ",\n", &saveptr);
+        char *topic_id_str = hr_strtok(NULL, ",", &saveptr);
+        char *prompt = hr_strtok(NULL, ",", &saveptr);
+        char *response = hr_strtok(NULL, ",", &saveptr);
+        char *mnemonic = hr_strtok(NULL, ",", &saveptr);
+        char *created_at_str = hr_strtok(NULL, ",", &saveptr);
+        char *due_at_str = hr_strtok(NULL, ",\n", &saveptr);
 
         if (!topic_id_str || !prompt || !response) {
             continue; /* Invalid line */
