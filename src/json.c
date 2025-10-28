@@ -1,5 +1,5 @@
-/* Enable POSIX extensions for strdup */
-#ifndef _POSIX_C_SOURCE
+/* Ensure POSIX prototypes like strdup are available when building on Unix */
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200809L
 #endif
 
@@ -9,6 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#if defined(_WIN32)
+#define hr_strdup _strdup
+#else
+#define hr_strdup strdup
+#endif
 
 /**
  * Internal JSON value structure.
@@ -481,7 +487,7 @@ HrJsonValue *hr_json_string_new(const char *str)
         return NULL;
     }
     value->type = HR_JSON_STRING;
-    value->data.string_val = strdup(str);
+    value->data.string_val = hr_strdup(str);
     if (!value->data.string_val) {
         free(value);
         return NULL;
@@ -550,7 +556,7 @@ bool hr_json_object_set(HrJsonValue *object, const char *key, HrJsonValue *value
         object->data.object_val.capacity = new_capacity;
     }
 
-    char *key_copy = strdup(key);
+    char *key_copy = hr_strdup(key);
     if (!key_copy) {
         return false;
     }
@@ -797,3 +803,5 @@ char *hr_json_serialize(const HrJsonValue *value, bool pretty)
 
     return out;
 }
+
+#undef hr_strdup
