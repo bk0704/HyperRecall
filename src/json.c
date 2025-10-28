@@ -481,7 +481,11 @@ HrJsonValue *hr_json_string_new(const char *str)
         return NULL;
     }
     value->type = HR_JSON_STRING;
+#if defined(_WIN32)
+    value->data.string_val = _strdup(str);
+#else
     value->data.string_val = strdup(str);
+#endif
     if (!value->data.string_val) {
         free(value);
         return NULL;
