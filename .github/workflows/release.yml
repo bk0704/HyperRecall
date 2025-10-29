@@ -69,6 +69,30 @@ jobs:
         run: cmake --build build --config Release
         shell: powershell
 
+      - name: Prepare Windows artifacts
+        run: |
+          $exe = Get-ChildItem -Path build -Recurse -Filter hyperrecall.exe | Select-Object -First 1
+          if (-not $exe) {
+            throw "hyperrecall.exe not found in build output"
+          }
+
+          $targetDir = Join-Path (Get-Location) 'build\\bin'
+          if (-not (Test-Path $targetDir)) {
+            New-Item -ItemType Directory -Path $targetDir | Out-Null
+          }
+
+          Copy-Item -Path $exe.FullName -Destination (Join-Path $targetDir 'hyperrecall.exe') -Force
+
+          $assetSource = Join-Path $exe.Directory.FullName 'assets'
+          if (Test-Path $assetSource) {
+            $assetTarget = Join-Path $targetDir 'assets'
+            if (Test-Path $assetTarget) {
+              Remove-Item -Path $assetTarget -Recurse -Force
+            }
+            Copy-Item -Path $assetSource -Destination $targetDir -Recurse -Force
+          }
+        shell: powershell
+
       - name: Install NSIS
         run: |
           choco install nsis -y
