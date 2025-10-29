@@ -110,7 +110,11 @@ IfFileExists "build\bin\Debug\hyperrecall.exe" 0 +3
   File "build\bin\Debug\hyperrecall.exe"
   Goto exe_copied
 ; If not found in any expected location, abort with clear message
-MessageBox MB_OK|MB_ICONSTOP "Could not find hyperrecall.exe in any expected build location (build\bin\, build\bin\Release\, build\bin\RelWithDebInfo\, build\bin\Debug\)"
+MessageBox MB_OK|MB_ICONSTOP "Could not find hyperrecall.exe in any expected build location:$\n\
+  - build\bin\$\n\
+  - build\bin\Release\$\n\
+  - build\bin\RelWithDebInfo\$\n\
+  - build\bin\Debug\"
 Abort "Executable not found"
 exe_copied:
 
@@ -125,8 +129,9 @@ IfFileExists "build\bin\Release\assets\*.*" 0 +3
 IfFileExists "build\bin\RelWithDebInfo\assets\*.*" 0 +3
   File /r "build\bin\RelWithDebInfo\assets\*.*"
   Goto assets_copied
-IfFileExists "build\bin\Debug\assets\*.*" 0 +2
+IfFileExists "build\bin\Debug\assets\*.*" 0 +3
   File /r "build\bin\Debug\assets\*.*"
+  Goto assets_copied
 assets_copied:
 
 ; Copy runtime dependencies (DLLs from vcpkg)
