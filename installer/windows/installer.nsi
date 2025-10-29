@@ -90,17 +90,26 @@ InstallDir "$PROGRAMFILES64\HyperRecall"
 
 ######################################################################
 
+; Determine build output directory (supports both multi-config and single-config builds)
+!ifexist "build\bin\${MAIN_APP_EXE}"
+  !define BUILD_OUTPUT_DIR "build\bin"
+!elseifexist "build\bin\Release\${MAIN_APP_EXE}"
+  !define BUILD_OUTPUT_DIR "build\bin\Release"
+!else
+  !error "Could not find ${MAIN_APP_EXE}. Please build the project before creating the installer."
+!endif
+
 Section -MainProgram
 ${INSTALL_TYPE}
 SetOverwrite ifnewer
 SetOutPath "$INSTDIR"
 
 ; Copy main executable
-File "build\bin\hyperrecall.exe"
+File "${BUILD_OUTPUT_DIR}\${MAIN_APP_EXE}"
 
 ; Copy assets directory
 SetOutPath "$INSTDIR\assets"
-File /r "build\bin\assets\*.*"
+File /r "${BUILD_OUTPUT_DIR}\assets\*.*"
 
 ; Copy runtime dependencies (DLLs from vcpkg)
 SetOutPath "$INSTDIR"
