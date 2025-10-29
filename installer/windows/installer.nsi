@@ -129,7 +129,7 @@ IfFileExists "build\bin\Release\assets\*.*" 0 +3
 IfFileExists "build\bin\RelWithDebInfo\assets\*.*" 0 +3
   File /r "build\bin\RelWithDebInfo\assets\*.*"
   Goto assets_copied
-IfFileExists "build\bin\Debug\assets\*.*" 0 +3
+IfFileExists "build\bin\Debug\assets\*.*" 0 +2
   File /r "build\bin\Debug\assets\*.*"
   Goto assets_copied
 assets_copied:
