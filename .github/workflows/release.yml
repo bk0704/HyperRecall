@@ -69,6 +69,29 @@ jobs:
         run: cmake --build build --config Release
         shell: powershell
 
+      - name: Ensure Windows binary layout
+        run: |
+          $possiblePaths = @(
+            "build\\bin\\hyperrecall.exe",
+            "build\\Release\\hyperrecall.exe",
+            "build\\hyperrecall.exe"
+          )
+          $destination = "build\\bin\\hyperrecall.exe"
+          foreach ($path in $possiblePaths) {
+            if (Test-Path $path) {
+              if ($path -ne $destination) {
+                New-Item -ItemType Directory -Path (Split-Path $destination) -Force | Out-Null
+                Copy-Item $path $destination -Force
+              }
+              $env:FOUND_BINARY = "true"
+              break
+            }
+          }
+          if ($env:FOUND_BINARY -ne "true") {
+            throw "hyperrecall.exe not found in expected build output locations."
+          }
+        shell: powershell
+
       - name: Install NSIS
         run: |
           choco install nsis -y
