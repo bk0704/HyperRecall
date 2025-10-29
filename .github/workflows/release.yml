@@ -69,6 +69,26 @@ jobs:
         run: cmake --build build --config Release
         shell: powershell
 
+      - name: Ensure Windows artifacts layout
+        run: |
+          $expectedExe = Join-Path (Get-Location) 'build\bin\hyperrecall.exe'
+          if (-not (Test-Path $expectedExe)) {
+            $actualExe = Get-ChildItem -Path build -Filter hyperrecall.exe -Recurse | Select-Object -First 1
+            if (-not $actualExe) {
+              throw 'hyperrecall.exe not found under build directory'
+            }
+
+            $targetDir = Split-Path $expectedExe
+            New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+            Copy-Item $actualExe.FullName -Destination $expectedExe -Force
+
+            $assetsSource = Join-Path $actualExe.DirectoryName 'assets'
+            if (Test-Path $assetsSource) {
+              Copy-Item $assetsSource -Destination (Join-Path $targetDir 'assets') -Recurse -Force
+            }
+          }
+        shell: powershell
+
       - name: Install NSIS
         run: |
           choco install nsis -y
