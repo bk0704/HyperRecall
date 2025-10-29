@@ -69,6 +69,18 @@ jobs:
         run: cmake --build build --config Release
         shell: powershell
 
+      - name: List build outputs
+        run: |
+          Write-Host "Listing build directory structure:"
+          Get-ChildItem -Path build -Recurse -Filter "hyperrecall.exe" | ForEach-Object { Write-Host $_.FullName }
+          Write-Host "`nListing build/bin contents:"
+          if (Test-Path "build/bin") {
+            Get-ChildItem -Path "build/bin" -Recurse | Select-Object FullName | Format-Table -AutoSize
+          } else {
+            Write-Host "build/bin directory does not exist"
+          }
+        shell: powershell
+
       - name: Ensure Windows artifacts layout
         run: |
           $expectedExe = Join-Path (Get-Location) 'build\bin\hyperrecall.exe'

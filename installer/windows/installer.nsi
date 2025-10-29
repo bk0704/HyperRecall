@@ -95,12 +95,44 @@ ${INSTALL_TYPE}
 SetOverwrite ifnewer
 SetOutPath "$INSTDIR"
 
-; Copy main executable
-File "build\bin\hyperrecall.exe"
+; Copy main executable - check multiple possible locations
+; Multi-config generators may place exe in build\bin\Release or build\bin\RelWithDebInfo
+IfFileExists "build\bin\hyperrecall.exe" 0 +3
+  File "build\bin\hyperrecall.exe"
+  Goto exe_copied
+IfFileExists "build\bin\Release\hyperrecall.exe" 0 +3
+  File "build\bin\Release\hyperrecall.exe"
+  Goto exe_copied
+IfFileExists "build\bin\RelWithDebInfo\hyperrecall.exe" 0 +3
+  File "build\bin\RelWithDebInfo\hyperrecall.exe"
+  Goto exe_copied
+IfFileExists "build\bin\Debug\hyperrecall.exe" 0 +3
+  File "build\bin\Debug\hyperrecall.exe"
+  Goto exe_copied
+; If not found in any expected location, abort with clear message
+MessageBox MB_OK|MB_ICONSTOP "Could not find hyperrecall.exe in any expected build location:$\n\
+  - build\bin\$\n\
+  - build\bin\Release\$\n\
+  - build\bin\RelWithDebInfo\$\n\
+  - build\bin\Debug\"
+Abort "Executable not found"
+exe_copied:
 
-; Copy assets directory
+; Copy assets directory - check multiple possible locations
 SetOutPath "$INSTDIR\assets"
-File /r "build\bin\assets\*.*"
+IfFileExists "build\bin\assets\*.*" 0 +3
+  File /r "build\bin\assets\*.*"
+  Goto assets_copied
+IfFileExists "build\bin\Release\assets\*.*" 0 +3
+  File /r "build\bin\Release\assets\*.*"
+  Goto assets_copied
+IfFileExists "build\bin\RelWithDebInfo\assets\*.*" 0 +3
+  File /r "build\bin\RelWithDebInfo\assets\*.*"
+  Goto assets_copied
+IfFileExists "build\bin\Debug\assets\*.*" 0 +2
+  File /r "build\bin\Debug\assets\*.*"
+  Goto assets_copied
+assets_copied:
 
 ; Copy runtime dependencies (DLLs from vcpkg)
 SetOutPath "$INSTDIR"
